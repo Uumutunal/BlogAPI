@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20240821134511_mig1")]
+    [Migration("20240822065014_mig1")]
     partial class mig1
     {
         /// <inheritdoc />
@@ -53,7 +53,7 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Post");
+                    b.ToTable("Posts", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.User", b =>
@@ -105,7 +105,7 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("User");
+                    b.ToTable("Users", (string)null);
                 });
 #pragma warning restore 612, 618
         }

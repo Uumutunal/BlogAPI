@@ -15,6 +15,5 @@ namespace Service.Abstract
         Task ApprovePost(int postId);
         Task DeletePost(int postId);
         Task LikePost(int postId, int userId);
-        Task Register(string email, string password, string confirmPassword);
     }
 }

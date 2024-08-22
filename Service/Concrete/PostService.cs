@@ -51,10 +51,6 @@ namespace Service.Concrete
             throw new NotImplementedException();
         }
 
-        public async Task Register(string email, string password, string confirmPassword)
-        {
-            //await _register.AssignInput(email, password, confirmPassword);
-        }
 
 
     }
