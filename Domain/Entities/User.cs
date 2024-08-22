@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace Domain.Entities
 {
+
     public class User : IdentityUser, IAuditableEntity
     {
         public string Firstname { get; set; }
@@ -21,4 +22,4 @@ namespace Domain.Entities
 
 
 
-}
+
