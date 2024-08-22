@@ -12,8 +12,8 @@ namespace Service.Abstract
         Task CreatePost(PostDto postDto);
         Task<List<PostDto>> GetAllPosts();
         Task<List<PostDto>> GetAllUnApprovedPosts();
-        Task ApprovePost(int postId);
-        Task DeletePost(int postId);
+        Task ApprovePost(Guid id);
+        Task DeletePost(Guid id);
         Task LikePost(int postId, int userId);
     }
 }

@@ -24,9 +24,11 @@ namespace Service.Concrete
             _repository = repository;
         }
 
-        public Task ApprovePost(int postId)
+        public async Task ApprovePost(Guid id)
         {
-            throw new NotImplementedException();
+            var postToBeApproved = await _repository.GetByIdAsync(id);
+            postToBeApproved.IsApproved = true;
+            _repository.Update(postToBeApproved);
         }
 
         public Task CreatePost(PostDto postDto)
@@ -37,19 +39,27 @@ namespace Service.Concrete
             return _repository.AddAsync(mappedPost);
         }
 
-        public Task DeletePost(int postId)
+        public async Task DeletePost(Guid id)
         {
-            throw new NotImplementedException();
+            await _repository.Delete(id);
         }
 
-        public Task<List<PostDto>> GetAllPosts()
+        public async Task<List<PostDto>> GetAllPosts()
         {
-            throw new NotImplementedException();
+            var posts = await _repository.GetAllAsync();
+            var approvedPosts = posts.Where(x => x.IsApproved);
+            var mappedPosts = approvedPosts.Adapt<List<PostDto>>();
+
+            return mappedPosts;
         }
 
-        public Task<List<PostDto>> GetAllUnApprovedPosts()
+        public async Task<List<PostDto>> GetAllUnApprovedPosts()
         {
-            throw new NotImplementedException();
+            var posts = await _repository.GetAllAsync();
+            var approvedPosts = posts.Where(x => !x.IsApproved);
+            var mappedPosts = approvedPosts.Adapt<List<PostDto>>();
+
+            return mappedPosts;
         }
 
         public Task LikePost(int postId, int userId)

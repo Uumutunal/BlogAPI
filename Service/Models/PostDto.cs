@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Domain.Entities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,7 +9,29 @@ namespace Service.Models
 {
     public class PostDto : BaseDto
     {
-        public string? Title { get; set; }
-        public string? Description { get; set; }
+        public string Title { get; set; }
+        public string Content { get; set; }
+        public string? Photo { get; set; }
+        public bool IsApproved { get; set; } = false;
+        public int Likes { get; set; }
+        public int UserId { get; set; }
+        //public UserDto User { get; set; }
+        //public List<Complain> Complains { get; set; }
+        //public List<PostCategory> PostCategories { get; set; }
+        //public List<PostLike> PostLikes { get; set; }
+
+        //public override bool Equals(object obj)
+        //{
+        //    if (obj is Post other)
+        //    {
+        //        return this.Id == other.Id;
+        //    }
+        //    return false;
+        //}
+
+        //public override int GetHashCode()
+        //{
+        //    return this.Id.GetHashCode();
+        //}
     }
 }

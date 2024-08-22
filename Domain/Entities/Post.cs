@@ -19,23 +19,23 @@ namespace Domain.Entities
         public int Likes { get; set; }
         public int UserId { get; set; }
         public User User { get; set; }
-        public List<Complain> Complains { get; set; }
-        public List<PostCategory> PostCategories { get; set; }
-        public List<PostLike> PostLikes { get; set; }
+        //public List<Complain> Complains { get; set; }
+        //public List<PostCategory> PostCategories { get; set; }
+        //public List<PostLike> PostLikes { get; set; }
 
-        public override bool Equals(object obj)
-        {
-            if (obj is Post other)
-            {
-                return this.Id == other.Id;
-            }
-            return false;
-        }
+        //public override bool Equals(object obj)
+        //{
+        //    if (obj is Post other)
+        //    {
+        //        return this.Id == other.Id;
+        //    }
+        //    return false;
+        //}
 
-        public override int GetHashCode()
-        {
-            return this.Id.GetHashCode();
-        }
+        //public override int GetHashCode()
+        //{
+        //    return this.Id.GetHashCode();
+        //}
 
     }
 }

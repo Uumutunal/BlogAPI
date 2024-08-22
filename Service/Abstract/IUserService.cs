@@ -14,5 +14,7 @@ namespace Service.Abstract
         Task<List<UserDto>> GetAllUsers();
         Task<UserDto> GetUserById(string id);
         Task UpdateUser(UserDto userDto);
+        Task AssignRoleToUser(string userEmail, string roleName);
+        Task AddRole(string[] roles);
     }
 }

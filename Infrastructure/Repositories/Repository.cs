@@ -28,6 +28,7 @@ namespace Infrastructure.Repositories
         public async Task<Guid> AddAsync(T entity)
         {
             await _entities.AddAsync(entity);
+            //_context.SaveChanges();
             await _unitOfWork.SaveChangesAsync();
             return entity.Id;
         }

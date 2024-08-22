@@ -4,6 +4,7 @@ using Mapster;
 using MapsterMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Service.Abstract;
 using Service.Models;
 using System;
@@ -91,5 +92,50 @@ namespace Service.Concrete
             await _userRepository.Update(mappedUser);
 
         }
+
+        public async Task AssignRoleToUser(string userEmail, string roleName)
+        {
+            var user = await _userManager.FindByEmailAsync(userEmail);
+
+            var roleManager = _serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+            var roleExist = await roleManager.RoleExistsAsync(roleName);
+
+            if (!roleExist)
+            {
+                return;
+            }
+
+            if (user != null)
+            {
+                var result = await _userManager.AddToRoleAsync(user, roleName);
+                if (result.Succeeded)
+                {
+                    Console.WriteLine($"{roleName} role assigned to {userEmail}");
+                }
+                else
+                {
+                    Console.WriteLine($"Error assigning role: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+                }
+            }
+
+        }
+
+        public async Task AddRole(string[] roles)
+        {
+            var roleManager = _serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+            IdentityResult roleResult;
+
+            foreach (var roleName in roles)
+            {
+                var roleExist = await roleManager.RoleExistsAsync(roleName);
+                if (!roleExist)
+                {
+                    roleResult = await roleManager.CreateAsync(new IdentityRole(roleName));
+                }
+            }
+        }
+
     }
 }
