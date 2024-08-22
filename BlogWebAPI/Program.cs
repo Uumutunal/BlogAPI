@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Service.Abstract;
+using Service.Concrete;
 using Service.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
@@ -36,6 +37,9 @@ namespace BlogWebAPI
                 .AddEntityFrameworkStores<AppDbContext>()
                 .AddDefaultTokenProviders();
 
+            builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+            builder.Services.AddScoped(typeof(IPostService), typeof(PostService));
+            builder.Services.AddScoped(typeof(IUnitOfWork), typeof(UnitOfWork));
             builder.Services.AddSingleton<JwtSecurityTokenHandler>();
 
 

@@ -1,4 +1,6 @@
 ﻿using Domain.Core.Repositories;
+using Domain.Entities;
+using Mapster;
 using Service.Abstract;
 using Service.Models;
 using System;
@@ -13,12 +15,12 @@ namespace Service.Concrete
     {
 
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IRepository<Post> _repository;
 
-
-        public PostService(IUnitOfWork unitOfWork)
+        public PostService(IUnitOfWork unitOfWork, IRepository<Post> repository)
         {
             _unitOfWork = unitOfWork;
-
+            _repository = repository;
         }
 
         public Task ApprovePost(int postId)
@@ -28,7 +30,10 @@ namespace Service.Concrete
 
         public Task CreatePost(PostDto postDto)
         {
-            throw new NotImplementedException();
+
+            var mappedPost = postDto.Adapt<Post>();
+
+            return _repository.AddAsync(mappedPost);
         }
 
         public Task DeletePost(int postId)

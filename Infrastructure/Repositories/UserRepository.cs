@@ -1,5 +1,6 @@
 ﻿using Domain.Core.Models;
 using Domain.Core.Repositories;
+using Domain.Entities;
 using Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -11,13 +12,13 @@ using System.Threading.Tasks;
 
 namespace Infrastructure.Repositories
 {
-    public class Repository<T> : IRepository<T> where T : BaseEntity
+    public class UserRepository<T> : IUserRepository<T> where T : IdentityUser, IAuditableEntity
     {
         public AppDbContext _context { get; }
         private readonly DbSet<T> _entities;
         private readonly IUnitOfWork _unitOfWork;
 
-        public Repository(AppDbContext context, IUnitOfWork unitOfWork)
+        public UserRepository(AppDbContext context, IUnitOfWork unitOfWork)
         {
             _context = context;
             _unitOfWork = unitOfWork;
@@ -25,14 +26,14 @@ namespace Infrastructure.Repositories
         }
 
 
-        public async Task<Guid> AddAsync(T entity)
+        public async Task<string> AddAsync(T entity)
         {
             await _entities.AddAsync(entity);
             await _unitOfWork.SaveChangesAsync();
             return entity.Id;
         }
 
-        public async Task Delete(Guid id)
+        public async Task Delete(string id)
         {
             var entity = await GetByIdAsync(id);
             if (entity != null)
@@ -44,7 +45,7 @@ namespace Infrastructure.Repositories
             }
         }
 
-        public async Task<T> GetByIdAsync(Guid id)
+        public async Task<T> GetByIdAsync(string id)
         {
             return await _entities.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
         }
@@ -55,9 +56,10 @@ namespace Infrastructure.Repositories
 
         }
 
-        public void Update(T entity)
+        public async Task Update(T entity)
         {
-            _unitOfWork.SaveChangesAsync();
+            _context.Update(entity);
+            await _unitOfWork.SaveChangesAsync();
         }
     }
 }

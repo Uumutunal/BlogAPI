@@ -10,9 +10,9 @@ namespace Domain.Core.Repositories
     public interface IRepository<T> where T : BaseEntity
     {
         Task<T> GetByIdAsync(Guid id);
-        Task<IList<T>> ListAllAsync();
-        Task<T> AddAsync(T entity);
+        Task<IList<T>> GetAllAsync();
+        Task<Guid> AddAsync(T entity);
         void Update(T entity);
-        void Delete(T entity);
+        Task Delete(Guid id);
     }
 }
