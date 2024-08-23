@@ -2,6 +2,7 @@ using Domain.Core.Repositories;
 using Domain.Entities;
 using Infrastructure.Data;
 using Infrastructure.Repositories;
+using Mapster;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -38,10 +39,12 @@ namespace BlogWebAPI
                 .AddDefaultTokenProviders();
 
             builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+            builder.Services.AddScoped(typeof(IUserRepository<>), typeof(UserRepository<>));
             builder.Services.AddScoped(typeof(IPostService), typeof(PostService));
             builder.Services.AddScoped(typeof(IUnitOfWork), typeof(UnitOfWork));
+            builder.Services.AddScoped(typeof(IUserService), typeof(UserService));
             builder.Services.AddSingleton<JwtSecurityTokenHandler>();
-
+            builder.Services.AddSingleton<IMapper>(new Mapper(new TypeAdapterConfig()));
 
             builder.Services.AddAuthentication(options =>
             {

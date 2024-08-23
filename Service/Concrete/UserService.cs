@@ -42,7 +42,8 @@ namespace Service.Concrete
 
         public async Task<List<UserDto>> GetAllUsers()
         {
-            var users = _userRepository.GetAllAsync();
+            var allUsers = _userManager.Users.ToList();
+            var users = allUsers.Where(x => !x.IsDeleted);
             var mappedUsers = users.Adapt<List<UserDto>>();
 
             return mappedUsers;
@@ -50,7 +51,8 @@ namespace Service.Concrete
 
         public async Task<UserDto> GetUserById(string id)
         {
-            var user = _userRepository.GetByIdAsync(id);
+            var user = _userManager.Users.FirstOrDefault(x => x.Id == id);
+
             var mappedUser = user.Adapt<UserDto>();
 
             return mappedUser;
@@ -87,10 +89,11 @@ namespace Service.Concrete
 
         public async Task UpdateUser(UserDto userDto)
         {
-            var mappedUser = userDto.Adapt<User>();
-
-            await _userRepository.Update(mappedUser);
-
+            var user = await _userManager.FindByIdAsync(userDto.Id);
+            if(user != null)
+            {
+                await _userManager.UpdateAsync(user);
+            }
         }
 
         public async Task AssignRoleToUser(string userEmail, string roleName)

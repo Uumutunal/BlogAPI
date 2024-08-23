@@ -37,7 +37,11 @@ namespace Service.Concrete
             var category = categoryDto.Adapt<Category>();
             await _categoryRepository.AddAsync(category);
         }
-
+        public async Task CreateComment(CommentDto commentDto)
+        {
+            var comment = commentDto.Adapt<Comment>();
+            await _commentRepository.AddAsync(comment);
+        }
         public async Task CreatePostCategory(PostCategoryDto postCategoryDto)
         {
             var post = postCategoryDto.Adapt<PostCategory>();
