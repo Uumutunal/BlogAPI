@@ -16,19 +16,52 @@ namespace Service.Concrete
     {
 
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IRepository<Post> _repository;
+        private readonly IRepository<Post> _postRepository;
+        private readonly IRepository<PostComment> _postCommentRepository;
+        private readonly IRepository<PostCategory> _postCategoryRepository;
+        private readonly IRepository<Category> _categoryRepository;
+        private readonly IRepository<Comment> _commentRepository;
 
-        public PostService(IUnitOfWork unitOfWork, IRepository<Post> repository)
+        public PostService(IUnitOfWork unitOfWork, IRepository<Post> postRepository, IRepository<PostComment> postCommentRepository, IRepository<PostCategory> postCategoryRepository, IRepository<Category> categoryRepository, IRepository<Comment> commentRepository)
         {
             _unitOfWork = unitOfWork;
-            _repository = repository;
+            _postRepository = postRepository;
+            _postCommentRepository = postCommentRepository;
+            _postCategoryRepository = postCategoryRepository;
+            _categoryRepository = categoryRepository;
+            _commentRepository = commentRepository;
+        }
+
+        public async Task CreateCategory(CategoryDto categoryDto)
+        {
+            var category = categoryDto.Adapt<Category>();
+            await _categoryRepository.AddAsync(category);
+        }
+
+        public async Task CreatePostCategory(PostCategoryDto postCategoryDto)
+        {
+            var post = postCategoryDto.Adapt<PostCategory>();
+            await _postCategoryRepository.AddAsync(post);
+        }
+
+        public async Task CreatePostComment(PostCommentDto postCommentDto)
+        {
+            var post = postCommentDto.Adapt<PostComment>();
+            await _postCommentRepository.AddAsync(post);
         }
 
         public async Task ApprovePost(Guid id)
         {
-            var postToBeApproved = await _repository.GetByIdAsync(id);
+            var postToBeApproved = await _postRepository.GetByIdAsync(id);
             postToBeApproved.IsApproved = true;
-            _repository.Update(postToBeApproved);
+            _postRepository.Update(postToBeApproved);
+        }
+
+        public async Task ApproveComment(Guid id)
+        {
+            var commentToBeApproved = await _commentRepository.GetByIdAsync(id);
+            commentToBeApproved.IsApproved = true;
+            _commentRepository.Update(commentToBeApproved);
         }
 
         public Task CreatePost(PostDto postDto)
@@ -36,17 +69,17 @@ namespace Service.Concrete
 
             var mappedPost = postDto.Adapt<Post>();
 
-            return _repository.AddAsync(mappedPost);
+            return _postRepository.AddAsync(mappedPost);
         }
 
         public async Task DeletePost(Guid id)
         {
-            await _repository.Delete(id);
+            await _postRepository.Delete(id);
         }
 
         public async Task<List<PostDto>> GetAllPosts()
         {
-            var posts = await _repository.GetAllAsync();
+            var posts = await _postRepository.GetAllAsync();
             var approvedPosts = posts.Where(x => x.IsApproved);
             var mappedPosts = approvedPosts.Adapt<List<PostDto>>();
 
@@ -55,7 +88,7 @@ namespace Service.Concrete
 
         public async Task<List<PostDto>> GetAllUnApprovedPosts()
         {
-            var posts = await _repository.GetAllAsync();
+            var posts = await _postRepository.GetAllAsync();
             var approvedPosts = posts.Where(x => !x.IsApproved);
             var mappedPosts = approvedPosts.Adapt<List<PostDto>>();
 
