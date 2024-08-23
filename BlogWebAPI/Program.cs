@@ -2,6 +2,8 @@ using Domain.Core.Repositories;
 using Domain.Entities;
 using Infrastructure.Data;
 using Infrastructure.Repositories;
+using Mapster;
+using MapsterMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -25,6 +27,7 @@ namespace BlogWebAPI
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
             // Add services to the container.
 
             builder.Services.AddControllers();
@@ -36,12 +39,16 @@ namespace BlogWebAPI
             builder.Services.AddIdentity<User, IdentityRole>()
                 .AddEntityFrameworkStores<AppDbContext>()
                 .AddDefaultTokenProviders();
-
+            
+            builder.Services.AddSingleton<IMapper>(new Mapper(new TypeAdapterConfig()));
             builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             builder.Services.AddScoped(typeof(IPostService), typeof(PostService));
+            builder.Services.AddScoped(typeof(IUserService), typeof(UserService));
+            builder.Services.AddScoped(typeof(IUserRepository<>), typeof(UserRepository<>));
             builder.Services.AddScoped(typeof(IUnitOfWork), typeof(UnitOfWork));
             builder.Services.AddSingleton<JwtSecurityTokenHandler>();
 
+            
 
             builder.Services.AddAuthentication(options =>
             {
@@ -50,17 +57,18 @@ namespace BlogWebAPI
             })
             .AddJwtBearer(options =>
             {
-                options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
-                    ValidAudience = builder.Configuration["Jwt:Issuer"],
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+                options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                ValidAudience = builder.Configuration["Jwt:Audience"], // Audience yerine Issuer kullanýlmýþ
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
                 };
             });
+
 
 
             // güvenlik þemasý oluþturacaðýz. Token'ýmýzla ilgili bir þemadýr.

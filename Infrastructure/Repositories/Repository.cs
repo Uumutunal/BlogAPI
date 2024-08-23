@@ -1,5 +1,6 @@
 ﻿using Domain.Core.Models;
 using Domain.Core.Repositories;
+using Domain.Entities;
 using Infrastructure.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -50,15 +51,15 @@ namespace Infrastructure.Repositories
             return await _entities.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
         }
 
-        public async Task<IList<T>> GetAllAsync()
-        {
-            return await _entities.Where(x => !x.IsDeleted).ToListAsync();
-
-        }
 
         public void Update(T entity)
         {
             _unitOfWork.SaveChangesAsync();
+        }
+
+        public async Task<IList<T>> GetAllAsync()
+        {
+            return await _entities.Where(x => !x.IsDeleted).ToListAsync();
         }
     }
 }
