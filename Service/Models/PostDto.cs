@@ -14,24 +14,8 @@ namespace Service.Models
         public string? Photo { get; set; }
         public bool IsApproved { get; set; } = false;
         public int Likes { get; set; }
-        public int UserId { get; set; }
-        //public UserDto User { get; set; }
-        //public List<Complain> Complains { get; set; }
-        //public List<PostCategory> PostCategories { get; set; }
-        //public List<PostLike> PostLikes { get; set; }
-
-        //public override bool Equals(object obj)
-        //{
-        //    if (obj is Post other)
-        //    {
-        //        return this.Id == other.Id;
-        //    }
-        //    return false;
-        //}
-
-        //public override int GetHashCode()
-        //{
-        //    return this.Id.GetHashCode();
-        //}
+        public List<PostCategory> PostCategories { get; set; }
+        public List<PostTag> PostTags { get; set; }
+        public List<PostComment> PostComments { get; set; }
     }
 }
