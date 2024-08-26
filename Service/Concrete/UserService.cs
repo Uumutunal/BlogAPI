@@ -2,15 +2,18 @@
 using Domain.Entities;
 using Mapster;
 using MapsterMapper;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 using Service.Abstract;
 using Service.Models;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -42,8 +45,8 @@ namespace Service.Concrete
 
         public async Task<List<UserDto>> GetAllUsers()
         {
-            var allUsers = _userManager.Users.ToList();
-            var users = allUsers.Where(x => !x.IsDeleted);
+
+            var users = _userManager.Users.Where(u => !u.IsDeleted).ToList();
             var mappedUsers = users.Adapt<List<UserDto>>();
 
             return mappedUsers;
@@ -52,30 +55,39 @@ namespace Service.Concrete
         public async Task<UserDto> GetUserById(string id)
         {
             var user = _userManager.Users.FirstOrDefault(x => x.Id == id);
-
             var mappedUser = user.Adapt<UserDto>();
 
             return mappedUser;
 
         }
 
-        public async Task<bool> Login(string email, string password)
+        public async Task<UserDto> Login(string email, string password)
         {
 
             var result = await _signInManager.PasswordSignInAsync(email, password, isPersistent: false, lockoutOnFailure: false);
 
             if (result.Succeeded)
             {
-                // Generate JWT token here if using JWT authentication
-                return true;
+                var user = await _userManager.FindByEmailAsync(email);
+                return new UserDto
+                {
+                    Email = user.Email,
+                    Id = user.Id
+                };
             }
-            return false;
+            return null;
         }
 
         public async Task<UserDto> Register(UserDto userDto)
         {
-            var user = new User { UserName = userDto.Email, Email = userDto.Email };
-            var result = await _userManager.CreateAsync(user, userDto.PasswordHash);
+            var user = new User
+            {
+                UserName = userDto.Email,
+                Email = userDto.Email,
+                Firstname = userDto.Firstname,
+                Lastname = userDto.Lastname,
+            };
+            var result = await _userManager.CreateAsync(user, userDto.Password);
 
             if (result.Succeeded)
             {
@@ -90,10 +102,46 @@ namespace Service.Concrete
         public async Task UpdateUser(UserDto userDto)
         {
             var user = await _userManager.FindByIdAsync(userDto.Id);
-            if(user != null)
+            if (user != null)
             {
                 await _userManager.UpdateAsync(user);
             }
+
+        }
+
+        public async Task<bool> UpdateUserRoleAsync(string userId, string roleName)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return false;
+            }
+
+            var roleManager = _serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+            var roleExist = await roleManager.RoleExistsAsync(roleName);
+            
+            if (roleExist == null)
+            {
+                return false;
+            }
+
+            var currentRoles = await _userManager.GetRolesAsync(user);
+
+            var removeResult = await _userManager.RemoveFromRolesAsync(user, currentRoles);
+            if (!removeResult.Succeeded)
+            {
+                return false;
+            }
+
+            var addResult = await _userManager.AddToRoleAsync(user, roleName);
+            if (!addResult.Succeeded)
+            {
+                return false;
+            }
+
+            return true; 
+
         }
 
         public async Task AssignRoleToUser(string userEmail, string roleName)
@@ -140,5 +188,42 @@ namespace Service.Concrete
             }
         }
 
+        public async Task<string> GenerateJwtToken(UserDto userDto)
+        {
+            if (userDto == null)
+            {
+                throw new ArgumentNullException(nameof(userDto));
+            }
+
+            // JWT ayarlarını appsettings'den al
+            var issuer = _configuration["JwtTokenSettings:Issuer"];
+            var audience = _configuration["JwtTokenSettings:Audience"];
+            var key = _configuration["JwtTokenSettings:Key"];
+            var lifetime = Convert.ToDouble(_configuration["JwtTokenSettings:Lifetime"]);
+
+            // JWT için claim'leri oluştur
+            var claims = new[]
+            {
+                new Claim(JwtRegisteredClaimNames.Sub, userDto.Email ?? string.Empty),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim(ClaimTypes.NameIdentifier, userDto.Id ?? string.Empty)
+            };
+
+            // Şifreleme anahtarını ve kimlik doğrulama bilgilerini ayarla
+            var keyBytes = Encoding.UTF8.GetBytes(key);
+            var symmetricKey = new SymmetricSecurityKey(keyBytes);
+            var credentials = new SigningCredentials(symmetricKey, SecurityAlgorithms.HmacSha256);
+
+            // JWT token oluştur
+            var token = new JwtSecurityToken(
+                issuer: issuer,
+                audience: audience,
+                claims: claims,
+                expires: DateTime.Now.AddMinutes(lifetime),
+                signingCredentials: credentials);
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+
+        }
     }
 }

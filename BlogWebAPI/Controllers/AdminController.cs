@@ -2,78 +2,83 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Service.Abstract;
 using System.IdentityModel.Tokens.Jwt;
 
 namespace BlogWebAPI.Controllers
 {
-
     [Route("api/[controller]")]
     [ApiController]
     public class AdminController : ControllerBase
     {
-        private readonly UserManager<User> _userManager;
-        private readonly SignInManager<User> _signInManager;
-        private readonly IConfiguration _configuration;
-        private readonly IServiceProvider _serviceProvider;
-        private readonly JwtSecurityTokenHandler _jwtSecurityTokenHandler;
+        private readonly IPostService _postService;
+        private readonly IUserService _userService;
 
-        public AdminController(UserManager<User> userManager,
-    SignInManager<User> signInManager,
-    IConfiguration configuration, IServiceProvider serviceProvider, JwtSecurityTokenHandler jwtSecurityTokenHandler)
+        public AdminController(IPostService postService,IUserService userService)
         {
-            _userManager = userManager;
-            _signInManager = signInManager;
-            _configuration = configuration;
-            _serviceProvider = serviceProvider;
-            _jwtSecurityTokenHandler = jwtSecurityTokenHandler;
+            _postService = postService;
+            _userService = userService;
         }
 
-        [HttpPost("AddRole")]
-        public async Task AddRole(string[] roles)
+        [HttpGet("Approve")]
+        public async Task<IActionResult> Approve(Guid postId)
         {
-            var roleManager = _serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-
-            IdentityResult roleResult;
-
-            foreach (var roleName in roles)
+            try
             {
-                var roleExist = await roleManager.RoleExistsAsync(roleName);
-                if (!roleExist)
-                {
-                    roleResult = await roleManager.CreateAsync(new IdentityRole(roleName));
-                }
+                await _postService.ApprovePost(postId);
+                return Ok(new { result = "Post confirmation completed successfully" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
             }
         }
 
-        //[HttpDelete("roles/{roleName}")]
-        //public async Task<IActionResult> DeleteRole(string roleName)
-        //{
-        //    var role = await _roleManager.FindByNameAsync(roleName);
+        [HttpPost("Delete")]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            try
+            {
+                await _postService.DeletePost(id);
+                return Ok(new { result = "Post deleted successfully" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
 
-        //    if (role == null)
-        //        return NotFound("Role not found.");
+        [HttpPost("Assign-Role")]
+        public async Task<IActionResult> AssignRoleToUser([FromQuery] string userEmail, [FromQuery] string roleName)
+        {
+            await _userService.AssignRoleToUser(userEmail, roleName);
+            return Ok($"{roleName} role assigned to {userEmail}.");
+        }
 
-        //    var result = await _roleManager.DeleteAsync(role);
+        [HttpPost("Add-Role")]
+        public async Task<IActionResult> AddRoles([FromBody] string[] roles)
+        {
+            await _userService.AddRole(roles);
+            return Ok("Roles added successfully.");
+        }
 
-        //    if (result.Succeeded)
-        //        return Ok("Role deleted successfully.");
-        //    else
-        //        return BadRequest(result.Errors);
-        //}
+        [HttpPut("UpdateRole")]
+        public async Task<IActionResult> UpdateUserRole([FromQuery] string userId, [FromQuery] string roleName)
+        {
+            if (string.IsNullOrEmpty(roleName))
+            {
+                return BadRequest("Role name cannot be null or empty.");
+            }
 
-        //[HttpPost("assign-role")]
-        //public async Task<IActionResult> AssignRoleToUser([FromBody] IdentityUserRole<string> model)
-        //{
-        //    var user = await _userManager.FindByIdAsync(model.UserId);
-        //    if (user == null)
-        //        return NotFound("User not found.");
+            var result = await _userService.UpdateUserRoleAsync(userId, roleName);
 
-        //    var result = await _userManager.AddToRoleAsync(user, model.RoleId);
+            if (!result)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error updating user role.");
+            }
 
-        //    if (result.Succeeded)
-        //        return Ok("Role assigned successfully.");
-        //    else
-        //        return BadRequest(result.Errors);
-        //}
+            return Ok(); 
+        }
+       
     }
 }

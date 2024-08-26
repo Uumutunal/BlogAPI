@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Rewrite;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using Service.Abstract;
 using Service.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -20,173 +21,66 @@ namespace BlogWebAPI.Controllers
     [ApiController]
     public class AccountController : ControllerBase
     {
+        private readonly IUserService _userService;
 
-        private readonly UserManager<User> _userManager;
-        private readonly SignInManager<User> _signInManager;
-        private readonly IConfiguration _configuration;
-        private readonly IServiceProvider _serviceProvider;
-        private readonly JwtSecurityTokenHandler _jwtSecurityTokenHandler;
-
-        public AccountController(UserManager<User> userManager,
-    SignInManager<User> signInManager,
-    IConfiguration configuration, IServiceProvider serviceProvider, JwtSecurityTokenHandler jwtSecurityTokenHandler)
+        public AccountController(IUserService userService)
         {
-            _userManager = userManager;
-            _signInManager = signInManager;
-            _configuration = configuration;
-            _serviceProvider = serviceProvider;
-            _jwtSecurityTokenHandler = jwtSecurityTokenHandler;
+            _userService = userService;
         }
 
-        [HttpPost("Register")]
-        public async Task<IActionResult> Register([FromBody] RegisterModel model)
+        [HttpGet("users")]
+        public async Task<ActionResult<List<UserDto>>> GetAllUsers()
         {
-            var user = new User { UserName = model.Email, Email = model.Email };
-            var result = await _userManager.CreateAsync(user, model.Password);
-
-            if (result.Succeeded)
+            var users = await _userService.GetAllUsers();
+            if (users == null || users.Count == 0)
             {
-                // You can add more claims or roles here
-                return Ok(new { result = "User registered successfully" });
+                return NotFound("No users found.");
             }
-
-            return BadRequest(result.Errors);
+            return Ok(users);
         }
 
-        [HttpPost("Login")]
-        public async Task<IActionResult> Login([FromBody] LoginModel model)
+        [HttpGet("user/{id}")]
+        public async Task<ActionResult<UserDto>> GetUserById(string id)
         {
-            var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, isPersistent: false, lockoutOnFailure: false);
-
-            if (result.Succeeded)
+            var user = await _userService.GetUserById(id);
+            if (user == null)
             {
-
-                //var token = GenerateToken(model.Email);
-
-                // Generate JWT token here if using JWT authentication
-                return Ok(new { result = "Login successful" });
+                return NotFound($"User with ID {id} not found.");
             }
-
-            return Unauthorized();
+            return Ok(user);
         }
 
-        [HttpPost("AddRole")]
-        public async Task AddRole(string[] roles)
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] UserDto userDto)
         {
-            var roleManager = _serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-
-            IdentityResult roleResult;
-
-            foreach (var roleName in roles)
+            if (userDto == null)
             {
-                var roleExist = await roleManager.RoleExistsAsync(roleName);
-                if (!roleExist)
-                {
-                    roleResult = await roleManager.CreateAsync(new IdentityRole(roleName));
-                }
-            }
-        }
-
-        [Authorize(Roles = "Admin")]
-        [HttpPost("AssignRoleToUser")]
-        public async Task AssignRoleToUser(string userEmail, string roleName)
-        {
-            var user = await _userManager.FindByEmailAsync(userEmail);
-
-            var roleManager = _serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-
-            var roleExist = await roleManager.RoleExistsAsync(roleName);
-
-            if (!roleExist)
-            {
-                return;
+                return BadRequest("Invalid user data.");
             }
 
-            if (user != null)
+            var loggedInUser = await _userService.Login(userDto.Email, userDto.Password);
+            
+            if (loggedInUser != null)
             {
-                var result = await _userManager.AddToRoleAsync(user, roleName);
-                if (result.Succeeded)
-                {
-                    Console.WriteLine($"{roleName} role assigned to {userEmail}");
-                }
-                else
-                {
-                    Console.WriteLine($"Error assigning role: {string.Join(", ", result.Errors.Select(e => e.Description))}");
-                }
-            }
-        }
-
-        [HttpPost("GenerateToken")]
-        public async Task<IActionResult> GenerateToken(string userEmail)
-        {
-
-            //appsettings.json'daki tanımlamalarımız yoksa hata versin.
-            if (!_configuration.GetSection("JwtTokenSettings").Exists())
-                return BadRequest("JwtTokenSettings mevcut değildir!");
-
-            if (!_configuration.GetSection("JwtTokenSettings").GetSection("Issuer").Exists())
-                return BadRequest("Issuer mevcut değildir!");
-
-
-            if (!_configuration.GetSection("JwtTokenSettings").GetSection("Audience").Exists())
-                return BadRequest("Audience mevcut değildir!");
-
-            if (!_configuration.GetSection("JwtTokenSettings").GetSection("Key").Exists())
-                return BadRequest("Key mevcut değildir!");
-
-            if (!_configuration.GetSection("JwtTokenSettings").GetSection("Lifetime").Exists())
-                return BadRequest("Lifetime mevcut değildir!");
-
-            //hepsi varsa istenen kullanıcıyı bul
-            var user = await _userManager.FindByEmailAsync(userEmail);
-
-
-            if (user != null)
-            {
-                //token'ı oluştur !
-
-                string issuer = _configuration.GetSection("JwtTokenSettings").GetSection("Issuer").Value;
-                //string issuer = _configuration["JwtTokenSettings:Issuer"];
-
-                string audience = _configuration.GetSection("JwtTokenSettings").GetSection("Audience").Value;
-                string key = _configuration.GetSection("JwtTokenSettings").GetSection("Key").Value;
-                string lifetime = _configuration.GetSection("JwtTokenSettings").GetSection("Lifetime").Value;
-
-                DateTime sonlanmaTarihi = DateTime.Now.AddMinutes(Convert.ToDouble(lifetime));
-
-                SecurityKey securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
-
-                SigningCredentials signingCredentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-
-                //kullanıcının özelliklerini hesaba katalım
-
-                List<Claim> claims = new List<Claim>();
-
-                var role = await _userManager.GetRolesAsync(user);
-
-                //Claim claim1 = new Claim(ClaimTypes.Name, istenenKullanici.Ad);
-                //Claim claim2 = new Claim(ClaimTypes.Surname, istenenKullanici.Soyad);
-                //Claim claim3 = new Claim(ClaimTypes.NameIdentifier, istenenKullanici.KullaniciAd);
-                Claim claim4 = new Claim(ClaimTypes.Role, role[0]);
-
-                //claims.Add(claim1);
-                //claims.Add(claim2);
-                //claims.Add(claim3);
-                claims.Add(claim4);
-
-                //token'ı oluşturmaya başlayalım....
-                JwtSecurityToken jwtSecurityToken = new JwtSecurityToken(issuer, audience, claims, expires: sonlanmaTarihi, signingCredentials: signingCredentials);
-
-                string token = _jwtSecurityTokenHandler.WriteToken(jwtSecurityToken);
-
-                return Ok(token);
-
+                var token = await _userService.GenerateJwtToken(loggedInUser);
+                return Ok(new { Token = token });
             }
 
-            return NotFound("Kullanıcı adı veya şifre hatalıdır");
-
+            return Unauthorized("Invalid login attempt.");
         }
 
 
+        [HttpPost("register")]
+        public async Task<ActionResult<UserDto>> Register([FromBody] UserDto userDto)
+        {
+            var user = await _userService.Register(userDto);
+            if (user == null)
+            {
+                return BadRequest("User registration failed.");
+            }
+            return Ok(user);
+        }
     }
+
 }
+
