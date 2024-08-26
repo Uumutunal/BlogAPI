@@ -8,11 +8,22 @@ using System.Threading.Tasks;
 
 namespace Domain.Entities
 {
-    public class User : IdentityUser 
-    {
 
+    public class User : IdentityUser, IAuditableEntity
+    {
+        public string Firstname { get; set; }
+        public string Lastname { get; set; }
+        public string? Photo { get; set; }
+        public DateTime? CreatedDate { get; set; } = DateTime.Now;
+        public DateTime? ModifiedDate { get; set; }
+        public DateTime? DeletedDate { get; set; }
+        public bool IsDeleted { get; set; } = false;
+            
+        //public List<Post> Posts { get; set; }
+
+        public List<PostComment> PostComments { get; set; }
     }
 
 
-    
 }
+

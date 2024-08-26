@@ -4,15 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Service.Models
+namespace Domain.Core.Models
 {
-    public class BaseDto
+    public interface IAuditableEntity
     {
-        public Guid Id { get; set; }
         public DateTime? CreatedDate { get; set; }
         public DateTime? ModifiedDate { get; set; }
         public DateTime? DeletedDate { get; set; }
-        public bool IsDeleted { get; set; } = false;
-
+        public bool IsDeleted { get; set; }
     }
 }

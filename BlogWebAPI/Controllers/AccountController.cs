@@ -1,45 +1,86 @@
 ﻿using Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Rewrite;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
+using Service.Abstract;
 using Service.Models;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 
 
 namespace BlogWebAPI.Controllers
 {
+    //[Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class AccountController : ControllerBase
     {
+        private readonly IUserService _userService;
 
-        private readonly UserManager<User> _userManager;
-        private readonly SignInManager<User> _signInManager;
-        private readonly IConfiguration _configuration;
-
-        public AccountController(UserManager<User> userManager,
-    SignInManager<User> signInManager,
-    IConfiguration configuration)
+        public AccountController(IUserService userService)
         {
-            _userManager = userManager;
-            _signInManager = signInManager;
-            _configuration = configuration;
+            _userService = userService;
         }
 
-        [HttpPost("Register")]
-        public async Task<IActionResult> Register([FromBody] RegisterModel model)
+        [HttpGet("users")]
+        public async Task<ActionResult<List<UserDto>>> GetAllUsers()
         {
-            var user = new User { UserName = model.Email, Email = model.Email };
-            var result = await _userManager.CreateAsync(user, model.Password);
-
-            if (result.Succeeded)
+            var users = await _userService.GetAllUsers();
+            if (users == null || users.Count == 0)
             {
-                // You can add more claims or roles here
-                return Ok(new { result = "User registered successfully" });
+                return NotFound("No users found.");
+            }
+            return Ok(users);
+        }
+
+        [HttpGet("user/{id}")]
+        public async Task<ActionResult<UserDto>> GetUserById(string id)
+        {
+            var user = await _userService.GetUserById(id);
+            if (user == null)
+            {
+                return NotFound($"User with ID {id} not found.");
+            }
+            return Ok(user);
+        }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] UserDto userDto)
+        {
+            if (userDto == null)
+            {
+                return BadRequest("Invalid user data.");
             }
 
-            return BadRequest(result.Errors);
+            var loggedInUser = await _userService.Login(userDto.Email, userDto.Password);
+            
+            if (loggedInUser != null)
+            {
+                var token = await _userService.GenerateJwtToken(loggedInUser);
+                return Ok(new { Token = token });
+            }
+
+            return Unauthorized("Invalid login attempt.");
         }
 
+
+        [HttpPost("register")]
+        public async Task<ActionResult<UserDto>> Register([FromBody] UserDto userDto)
+        {
+            var user = await _userService.Register(userDto);
+            if (user == null)
+            {
+                return BadRequest("User registration failed.");
+            }
+            return Ok(user);
+        }
     }
+
 }
+
