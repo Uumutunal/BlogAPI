@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Service.Models
 {
-    public class PostCategoryDto : BaseDto
+    public class PostCategoryDto 
     {
         public Guid PostId { get; set; }
         public Post Post { get; set; }

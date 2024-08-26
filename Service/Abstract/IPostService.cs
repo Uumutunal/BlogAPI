@@ -15,5 +15,10 @@ namespace Service.Abstract
         Task ApprovePost(Guid id);
         Task DeletePost(Guid id);
         Task LikePost(int postId, int userId);
+        Task<Guid> CreateComment(CommentDto commentDto);
+        Task ApproveComment(Guid id);
+        Task DeleteComment(Guid id);
+        Task<PostDto> GetByIdAsync(Guid id);
+        Task CreatePostComment(PostCommentDto postCommentDto);
     }
 }

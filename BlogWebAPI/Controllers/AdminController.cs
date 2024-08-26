@@ -20,8 +20,8 @@ namespace BlogWebAPI.Controllers
             _userService = userService;
         }
 
-        [HttpGet("Approve")]
-        public async Task<IActionResult> Approve(Guid postId)
+        [HttpGet("ApprovePost")]
+        public async Task<IActionResult> ApprovePosts(Guid postId)
         {
             try
             {
@@ -33,6 +33,21 @@ namespace BlogWebAPI.Controllers
                 return BadRequest(new { error = ex.Message });
             }
         }
+
+        [HttpGet("ApproveComment")]
+        public async Task<IActionResult> ApproveComment(Guid commentId)
+        {
+            try
+            {
+                await _postService.ApproveComment(commentId);
+                return Ok(new { result = "Comment confirmation completed successfully" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
 
         [HttpPost("Delete")]
         public async Task<IActionResult> Delete(Guid id)

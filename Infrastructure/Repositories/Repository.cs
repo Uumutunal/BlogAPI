@@ -52,9 +52,10 @@ namespace Infrastructure.Repositories
         }
 
 
-        public void Update(T entity)
+        public async Task Update(T entity)
         {
-            _unitOfWork.SaveChangesAsync();
+            _entities.Update(entity);
+            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task<IList<T>> GetAllAsync()

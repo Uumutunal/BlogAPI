@@ -12,18 +12,40 @@ namespace BlogWebAPI.Controllers
     public class PostController : ControllerBase
     {
         private readonly IPostService _postService;
+        private readonly IUserService _userService;
 
-        public PostController(IPostService postService)
+        public PostController(IPostService postService,IUserService userService)
         {
             _postService = postService;
+            _userService = userService;
         }
 
-        [HttpGet("GetAllPost")]
-        public async Task GetAllPost()
-        {          
+        [HttpGet("AllPost")]
+        public async Task<IActionResult> GetAllPosts()
+        {
             var posts = await _postService.GetAllPosts();
+
+            if (posts == null || !posts.Any())
+            {
+                return NotFound("No posts found.");
+            }
+
+            return Ok(posts);
         }
 
+        [HttpPost("AddComment")]
+        public async Task AddComment([FromBody] CommentDto commentDto, [FromQuery] string userId, [FromQuery] Guid postId)
+        {
+           var commentId =  await _postService.CreateComment(commentDto);
+            
+
+            var postcomment = new PostCommentDto(){
+                PostId = postId,
+                UserId = userId,
+                CommentId = commentId
+            };
+            await _postService.CreatePostComment(postcomment);
+        }
 
         [HttpPost("AddPost")]
         public async Task AddPost([FromBody] PostDto postDto)
@@ -31,13 +53,27 @@ namespace BlogWebAPI.Controllers
             await _postService.CreatePost(postDto);
         }
 
-        [HttpPost("Delete")]
-        public async Task<IActionResult> Delete(Guid id)
+        [HttpPost("DeletePost")]
+        public async Task<IActionResult> DeletePost(Guid id)
         {
             try
             {
                 await _postService.DeletePost(id);
                 return Ok(new { result = "Post deleted successfully" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [HttpPost("DeleteComment")]
+        public async Task<IActionResult> DeleteComment(Guid id)
+        {
+            try
+            {
+                await _postService.DeleteComment(id);
+                return Ok(new { result = "Comment deleted successfully" });
             }
             catch (Exception ex)
             {

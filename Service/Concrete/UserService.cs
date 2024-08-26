@@ -99,14 +99,25 @@ namespace Service.Concrete
             return null;
         }
 
-        public async Task UpdateUser(UserDto userDto)
+        public async Task<IdentityUser> UpdateUser(UserDto userDto)
         {
             var user = await _userManager.FindByIdAsync(userDto.Id);
             if (user != null)
             {
-                await _userManager.UpdateAsync(user);
-            }
+                user.Firstname = userDto.Firstname;
+                user.Lastname = userDto.Lastname;
+                user.Email = userDto.Email;
+                user.UserName = userDto.Email;
+                user.ModifiedDate = DateTime.Now;
+                if (!string.IsNullOrWhiteSpace(userDto.Password))
+                {
+                    user.PasswordHash = _userManager.PasswordHasher.HashPassword(user, userDto.Password);
+                }
 
+                await _userManager.UpdateAsync(user);
+                return user;
+            }
+            return null;
         }
 
         public async Task<bool> UpdateUserRoleAsync(string userId, string roleName)

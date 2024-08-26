@@ -37,10 +37,13 @@ namespace Service.Concrete
             var category = categoryDto.Adapt<Category>();
             await _categoryRepository.AddAsync(category);
         }
-        public async Task CreateComment(CommentDto commentDto)
+        public async Task<Guid> CreateComment(CommentDto commentDto)
         {
             var comment = commentDto.Adapt<Comment>();
-            await _commentRepository.AddAsync(comment);
+            comment.CreatedDate = DateTime.Now;
+            comment.Id = Guid.NewGuid();
+            var id = await _commentRepository.AddAsync(comment);
+            return id;
         }
         public async Task CreatePostCategory(PostCategoryDto postCategoryDto)
         {
@@ -51,6 +54,7 @@ namespace Service.Concrete
         public async Task CreatePostComment(PostCommentDto postCommentDto)
         {
             var post = postCommentDto.Adapt<PostComment>();
+            post.CreatedDate = DateTime.Now;
             await _postCommentRepository.AddAsync(post);
         }
 
@@ -72,7 +76,8 @@ namespace Service.Concrete
         {
 
             var mappedPost = postDto.Adapt<Post>();
-
+            mappedPost.CreatedDate = DateTime.Now;
+            mappedPost.Id = Guid.NewGuid();
             return _postRepository.AddAsync(mappedPost);
         }
 
@@ -90,6 +95,11 @@ namespace Service.Concrete
             return mappedPosts;
         }
 
+        public async Task DeleteComment(Guid id)
+        {
+            await _commentRepository.Delete(id);
+        }
+
         public async Task<List<PostDto>> GetAllUnApprovedPosts()
         {
             var posts = await _postRepository.GetAllAsync();
@@ -102,6 +112,13 @@ namespace Service.Concrete
         public Task LikePost(int postId, int userId)
         {
             throw new NotImplementedException();
+        }
+
+        public async Task<PostDto> GetByIdAsync(Guid id)
+        {
+           var post = await _postRepository.GetByIdAsync(id);
+           var mappedPost = post.Adapt<PostDto>();
+            return mappedPost;
         }
 
 

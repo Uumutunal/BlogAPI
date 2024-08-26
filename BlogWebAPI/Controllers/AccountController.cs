@@ -28,7 +28,7 @@ namespace BlogWebAPI.Controllers
             _userService = userService;
         }
 
-        [HttpGet("users")]
+        [HttpGet("AllUser")]
         public async Task<ActionResult<List<UserDto>>> GetAllUsers()
         {
             var users = await _userService.GetAllUsers();
@@ -50,7 +50,7 @@ namespace BlogWebAPI.Controllers
             return Ok(user);
         }
 
-        [HttpPost("login")]
+        [HttpPost("Login")]
         public async Task<IActionResult> Login([FromBody] UserDto userDto)
         {
             if (userDto == null)
@@ -70,7 +70,7 @@ namespace BlogWebAPI.Controllers
         }
 
 
-        [HttpPost("register")]
+        [HttpPost("Register")]
         public async Task<ActionResult<UserDto>> Register([FromBody] UserDto userDto)
         {
             var user = await _userService.Register(userDto);
@@ -78,6 +78,21 @@ namespace BlogWebAPI.Controllers
             {
                 return BadRequest("User registration failed.");
             }
+            return Ok(user);
+        }
+
+        [HttpPut("Update")]
+        public async Task<IActionResult> UpdateUser(string id, [FromBody] UserDto userDto)
+        {
+            userDto.Id = id;
+
+            var user = await _userService.UpdateUser(userDto);
+
+            if (user == null)
+            {
+                return NotFound();
+            }
+
             return Ok(user);
         }
     }

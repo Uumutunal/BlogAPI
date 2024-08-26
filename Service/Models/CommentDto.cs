@@ -10,7 +10,5 @@ namespace Service.Models
     public class CommentDto : BaseDto
     {
         public string Content { get; set; }
-        public bool IsApproved { get; set; }
-        public List<PostComment> PostComments { get; set; }
     }
 }
