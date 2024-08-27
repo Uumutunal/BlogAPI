@@ -32,6 +32,15 @@ namespace Service.Concrete
             _commentRepository = commentRepository;
         }
 
+
+        public async Task<List<PostCategoryDto>> GetAllPostCategories()
+        {
+            var allpostCategories = await _postCommentRepository.GetAllAsync();
+            var allpostCategoriesMapped = allpostCategories.Adapt<List<PostCategoryDto>>();
+
+            return allpostCategoriesMapped;
+        }
+
         public async Task CreateCategory(CategoryDto categoryDto)
         {
             var category = categoryDto.Adapt<Category>();
@@ -96,7 +105,7 @@ namespace Service.Concrete
             _commentRepository.Update(commentToBeApproved);
         }
 
-        public async Task CreatePost(PostDto postDto, List<Guid> categoryIds)
+        public async Task CreatePost(PostDto postDto, List<Guid> categoryIds = null)
         {
             var post = postDto.Adapt<Post>();
             post.CreatedDate = DateTime.Now;

@@ -109,6 +109,10 @@ namespace Service.Concrete
                 user.Email = userDto.Email;
                 user.UserName = userDto.Email;
                 user.ModifiedDate = DateTime.Now;
+
+                await _userManager.RemovePasswordAsync(user);
+                await _userManager.AddPasswordAsync(user, userDto.Password);
+
                 if (!string.IsNullOrWhiteSpace(userDto.Password))
                 {
                     user.PasswordHash = _userManager.PasswordHasher.HashPassword(user, userDto.Password);

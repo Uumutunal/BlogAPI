@@ -1,4 +1,5 @@
-﻿using Domain.Entities;
+﻿using Domain.Core.Repositories;
+using Domain.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -18,7 +19,21 @@ namespace BlogWebAPI.Controllers
         {
             _postService = postService;
             _userService = userService;
+
         }
+        [HttpGet("AllPostCategories")]
+        public async Task<IActionResult> GetAllPostCategories()
+        {
+            var posts = await _postService.GetAllPostCategories();
+
+            if (posts == null || !posts.Any())
+            {
+                return NotFound("No posts found.");
+            }
+
+            return Ok(posts);
+        }
+
 
         [HttpGet("AllPost")]
         public async Task<IActionResult> GetAllPosts()

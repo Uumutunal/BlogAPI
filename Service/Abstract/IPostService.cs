@@ -9,7 +9,7 @@ namespace Service.Abstract
 {
     public interface IPostService
     {
-        Task CreatePost(PostDto postDto, List<Guid> categoryIds);
+        Task CreatePost(PostDto postDto, List<Guid> categoryIds = null);
         Task<List<PostDto>> GetAllPosts();
         Task<List<PostDto>> GetAllUnApprovedPosts();
         Task ApprovePost(Guid id);
@@ -23,6 +23,7 @@ namespace Service.Abstract
         Task CreateCategory(CategoryDto categoryDto);
         Task DeleteCategory(Guid id);
         Task<bool> UpdateCategory(Guid id, CategoryDto categoryDto);
+        Task<List<PostCategoryDto>> GetAllPostCategories();
 
     }
 }

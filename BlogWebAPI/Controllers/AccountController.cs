@@ -39,8 +39,8 @@ namespace BlogWebAPI.Controllers
             return Ok(users);
         }
 
-        [HttpGet("user/{id}")]
-        public async Task<ActionResult<UserDto>> GetUserById(string id)
+        [HttpGet("user")]
+        public async Task<ActionResult<UserDto>> GetUserById([FromQuery] string id)
         {
             var user = await _userService.GetUserById(id);
             if (user == null)
@@ -63,7 +63,7 @@ namespace BlogWebAPI.Controllers
             if (loggedInUser != null)
             {
                 var token = await _userService.GenerateJwtToken(loggedInUser);
-                return Ok(new { Token = token });
+                return Ok(new { Token = token, UserId = loggedInUser.Id });
             }
 
             return Unauthorized("Invalid login attempt.");
@@ -82,13 +82,31 @@ namespace BlogWebAPI.Controllers
         }
 
         [HttpPut("Update")]
-        public async Task<IActionResult> UpdateUser(string id, [FromBody] UserDto userDto)
+        public async Task<IActionResult> UpdateUser([FromBody] UserDto userDto)
         {
-            userDto.Id = id;
 
-            var user = await _userService.UpdateUser(userDto);
+            var user = await _userService.GetUserById(userDto.Id);
 
-            if (user == null)
+            var loggedInUser = await _userService.Login(userDto.Email, userDto.Password);
+
+            if (loggedInUser == null)
+            {
+                return Unauthorized();
+
+            }
+
+            if (userDto.ConfirmPassword != "")
+            {
+                user.Password = userDto.ConfirmPassword;
+            }
+
+            user.Firstname = userDto.Firstname;
+            user.Lastname = userDto.Lastname;
+            user.Email = userDto.Email;
+
+            var updatedUser = await _userService.UpdateUser(user);
+
+            if (updatedUser == null)
             {
                 return NotFound();
             }
