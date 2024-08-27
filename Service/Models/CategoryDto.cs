@@ -11,7 +11,6 @@ namespace Service.Models
     public class CategoryDto : BaseDto
     {
         public string Name { get; set; }
-        public List<PostCategory> PostCategories { get; set; }
 
     }
 }

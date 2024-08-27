@@ -48,9 +48,15 @@ namespace BlogWebAPI.Controllers
         }
 
         [HttpPost("AddPost")]
-        public async Task AddPost([FromBody] PostDto postDto)
+        public async Task<IActionResult> AddPost([FromBody] PostDto postDto)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             await _postService.CreatePost(postDto);
+            return Ok("Post created successfully.");
         }
 
         [HttpPost("DeletePost")]

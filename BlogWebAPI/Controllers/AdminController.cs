@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Service.Abstract;
+using Service.Models;
 using System.IdentityModel.Tokens.Jwt;
 
 namespace BlogWebAPI.Controllers
@@ -49,7 +50,7 @@ namespace BlogWebAPI.Controllers
         }
 
 
-        [HttpPost("Delete")]
+        [HttpPost("DeletePost")]
         public async Task<IActionResult> Delete(Guid id)
         {
             try
@@ -94,6 +95,50 @@ namespace BlogWebAPI.Controllers
 
             return Ok(); 
         }
-       
+
+        [HttpPost("CreateCategory")]
+        public async Task<IActionResult> CreateCategory([FromBody] CategoryDto categoryDto)
+        {
+            if (categoryDto == null || string.IsNullOrEmpty(categoryDto.Name))
+            {
+                return BadRequest("Category name is required.");
+            }
+
+            await _postService.CreateCategory(categoryDto);
+            return Ok("Category created successfully.");
+        }
+
+        [HttpPost("DeleteCategory")]
+        public async Task<IActionResult> DeleteCategory(Guid id)
+        {
+
+            try
+            {
+                await _postService.DeleteCategory(id);
+                return Ok(new { result = "Category deleted successfully" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [HttpPut("UpdateCategory")]
+        public async Task<IActionResult> UpdateCategory(Guid id, [FromBody] CategoryDto categoryDto)
+        {
+            if (categoryDto == null || string.IsNullOrEmpty(categoryDto.Name))
+            {
+                return BadRequest("Category name is required.");
+            }
+
+            var result = await _postService.UpdateCategory(id, categoryDto);
+            if (!result)
+            {
+                return NotFound("Category not found.");
+            }
+
+            return Ok("Category updated successfully.");
+        }
+
     }
 }

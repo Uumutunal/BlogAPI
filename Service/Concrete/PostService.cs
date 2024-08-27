@@ -35,8 +35,32 @@ namespace Service.Concrete
         public async Task CreateCategory(CategoryDto categoryDto)
         {
             var category = categoryDto.Adapt<Category>();
+            category.CreatedDate = DateTime.Now;
+            category.Id = Guid.NewGuid();
             await _categoryRepository.AddAsync(category);
         }
+
+        public async Task DeleteCategory(Guid id)
+        {
+            await _categoryRepository.Delete(id);
+        }
+
+        public async Task<bool> UpdateCategory(Guid id, CategoryDto categoryDto)
+        {
+            var category = await _categoryRepository.GetByIdAsync(id);
+            if (category == null)
+            {
+                return false;
+            }
+
+            category.Name = categoryDto.Name;
+            category.ModifiedDate = DateTime.Now;
+
+            await _categoryRepository.Update(category);
+
+            return true;
+        }
+
         public async Task<Guid> CreateComment(CommentDto commentDto)
         {
             var comment = commentDto.Adapt<Comment>();
@@ -72,13 +96,29 @@ namespace Service.Concrete
             _commentRepository.Update(commentToBeApproved);
         }
 
-        public Task CreatePost(PostDto postDto)
+        public async Task CreatePost(PostDto postDto, List<Guid> categoryIds)
         {
+            var post = postDto.Adapt<Post>();
+            post.CreatedDate = DateTime.Now;
+            post.Id = Guid.NewGuid();
 
-            var mappedPost = postDto.Adapt<Post>();
-            mappedPost.CreatedDate = DateTime.Now;
-            mappedPost.Id = Guid.NewGuid();
-            return _postRepository.AddAsync(mappedPost);
+            await _postRepository.AddAsync(post);
+
+
+            var allCategories = await _categoryRepository.GetAllAsync();
+            var categories = allCategories.Where(c => categoryIds.Contains(c.Id)).ToList();
+
+            foreach (var category in categories)
+            {
+                var postCategory = new PostCategoryDto
+                {
+                    PostId = post.Id,
+                    CategoryId = category.Id
+                };
+                var postCategories = postCategory.Adapt<PostCategory>();
+                await _postCategoryRepository.AddAsync(postCategories);
+            }
+
         }
 
         public async Task DeletePost(Guid id)
@@ -116,8 +156,8 @@ namespace Service.Concrete
 
         public async Task<PostDto> GetByIdAsync(Guid id)
         {
-           var post = await _postRepository.GetByIdAsync(id);
-           var mappedPost = post.Adapt<PostDto>();
+            var post = await _postRepository.GetByIdAsync(id);
+            var mappedPost = post.Adapt<PostDto>();
             return mappedPost;
         }
 
