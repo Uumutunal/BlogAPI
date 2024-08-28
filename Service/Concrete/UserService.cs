@@ -11,6 +11,7 @@ using Service.Abstract;
 using Service.Models;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
@@ -216,13 +217,22 @@ namespace Service.Concrete
             var key = _configuration["JwtTokenSettings:Key"];
             var lifetime = Convert.ToDouble(_configuration["JwtTokenSettings:Lifetime"]);
 
+            var user = _userManager.Users.FirstOrDefault(x => x.Id == userDto.Id);
+            var roles = await _userManager.GetRolesAsync(user);
+
             // JWT için claim'leri oluştur
-            var claims = new[]
+            var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub, userDto.Email ?? string.Empty),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(ClaimTypes.NameIdentifier, userDto.Id ?? string.Empty)
+                new Claim(ClaimTypes.NameIdentifier, userDto.Id ?? string.Empty),
+                new Claim(ClaimTypes.Name, userDto.Email ?? string.Empty)
             };
+
+            foreach (var role in roles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
 
             // Şifreleme anahtarını ve kimlik doğrulama bilgilerini ayarla
             var keyBytes = Encoding.UTF8.GetBytes(key);

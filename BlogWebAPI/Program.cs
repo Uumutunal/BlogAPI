@@ -64,9 +64,9 @@ namespace BlogWebAPI
                 ValidateAudience = true,
                 ValidateLifetime = true,
                 ValidateIssuerSigningKey = true,
-                ValidIssuer = builder.Configuration["Jwt:Issuer"],
-                ValidAudience = builder.Configuration["Jwt:Audience"], // Audience yerine Issuer kullanýlmýþ
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+                ValidIssuer = builder.Configuration["JwtTokenSettings:Issuer"],
+                ValidAudience = builder.Configuration["JwtTokenSettings:Audience"], 
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtTokenSettings:Key"]))
                 };
             });
 
