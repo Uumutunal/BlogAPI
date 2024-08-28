@@ -48,6 +48,27 @@ namespace BlogWebAPI.Controllers
             return Ok(posts);
         }
 
+        [HttpPost("ApprovePost")]
+        public async Task<IActionResult> ApprovePost([FromBody] Guid id)
+        {
+            await _postService.ApprovePost(id);
+
+            return Ok();
+        }
+
+        [HttpGet("AllUnApprovedPost")]
+        public async Task<IActionResult> GetAllUnApprovedPosts()
+        {
+            var posts = await _postService.GetAllUnApprovedPosts();
+
+            if (posts == null || !posts.Any())
+            {
+                return NotFound("No posts found.");
+            }
+
+            return Ok(posts);
+        }
+
         [HttpPost("AddComment")]
         public async Task AddComment([FromBody] CommentDto commentDto, [FromQuery] string userId, [FromQuery] Guid postId)
         {

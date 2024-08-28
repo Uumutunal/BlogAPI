@@ -81,6 +81,14 @@ namespace BlogWebAPI.Controllers
             return Ok(user);
         }
 
+        [HttpGet("GetAllRoles")]
+        public async Task<ActionResult<string>> GetAllRoles()
+        {
+            var roles = await _userService.GetAllRoles();
+
+            return Ok(roles);
+        }
+
         [HttpPut("Update")]
         public async Task<IActionResult> UpdateUser([FromBody] UserDto userDto)
         {

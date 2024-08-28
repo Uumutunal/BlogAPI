@@ -204,6 +204,18 @@ namespace Service.Concrete
             }
         }
 
+        public async Task<List<string>> GetAllRoles()
+        {
+            var roleManager = _serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+
+            var roles = roleManager.Roles.Select(r => r.Name).ToList();
+
+            return roles;
+        }
+
+
+
         public async Task<string> GenerateJwtToken(UserDto userDto)
         {
             if (userDto == null)
