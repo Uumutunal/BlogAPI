@@ -14,11 +14,13 @@ namespace BlogWebAPI.Controllers
     {
         private readonly IPostService _postService;
         private readonly IUserService _userService;
+        private readonly UserManager<User> _userManager;
 
-        public AdminController(IPostService postService,IUserService userService)
+        public AdminController(IPostService postService,IUserService userService, UserManager<User> userManager)
         {
             _postService = postService;
             _userService = userService;
+            _userManager = userManager;
         }
 
         [HttpGet("ApprovePost")]
@@ -79,21 +81,24 @@ namespace BlogWebAPI.Controllers
         }
 
         [HttpPut("UpdateRole")]
-        public async Task<IActionResult> UpdateUserRole([FromQuery] string userId, [FromQuery] string roleName)
+        public async Task<IActionResult> UpdateUserRole([FromBody] UpdateRoleRequest request)
         {
-            if (string.IsNullOrEmpty(roleName))
+
+            var user = await _userManager.FindByEmailAsync(request.UserId);
+
+            if (string.IsNullOrEmpty(request.RoleName))
             {
                 return BadRequest("Role name cannot be null or empty.");
             }
 
-            var result = await _userService.UpdateUserRoleAsync(userId, roleName);
+            var result = await _userService.UpdateUserRoleAsync(user.Id, request.RoleName);
 
             if (!result)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, "Error updating user role.");
             }
 
-            return Ok(); 
+            return Ok();
         }
 
         [HttpPost("CreateCategory")]
