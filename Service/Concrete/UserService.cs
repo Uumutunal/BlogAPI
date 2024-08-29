@@ -61,7 +61,22 @@ namespace Service.Concrete
             return mappedUser;
 
         }
+        public async Task<IdentityResult> DeleteUser(string id)
+        {
 
+
+            var user = _userManager.Users.FirstOrDefault(x => x.Id == id);
+            if (user != null)
+            {
+
+                var result = await _userManager.DeleteAsync(user);
+
+                return result;
+            }
+
+            return null;
+
+        }
         public async Task<UserDto> Login(string email, string password)
         {
 
@@ -87,6 +102,7 @@ namespace Service.Concrete
                 Email = userDto.Email,
                 Firstname = userDto.Firstname,
                 Lastname = userDto.Lastname,
+                Photo = userDto.Photo,
             };
             var result = await _userManager.CreateAsync(user, userDto.Password);
 
@@ -136,7 +152,7 @@ namespace Service.Concrete
             var roleManager = _serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
             var roleExist = await roleManager.RoleExistsAsync(roleName);
-            
+
             if (roleExist == null)
             {
                 return false;
@@ -156,7 +172,7 @@ namespace Service.Concrete
                 return false;
             }
 
-            return true; 
+            return true;
 
         }
 

@@ -15,12 +15,14 @@ namespace BlogWebAPI.Controllers
         private readonly IPostService _postService;
         private readonly IUserService _userService;
         private readonly UserManager<User> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
 
-        public AdminController(IPostService postService,IUserService userService, UserManager<User> userManager)
+        public AdminController(IPostService postService,IUserService userService, UserManager<User> userManager, RoleManager<IdentityRole> roleManager)
         {
             _postService = postService;
             _userService = userService;
             _userManager = userManager;
+            _roleManager = roleManager;
         }
 
         [HttpGet("ApprovePost")]
@@ -78,6 +80,39 @@ namespace BlogWebAPI.Controllers
         {
             await _userService.AddRole(roles);
             return Ok("Roles added successfully.");
+        }
+
+        [HttpPost("DeleteRole")]
+        public async Task<IActionResult> DeleteRole([FromBody] string[] roleName)
+        {
+            if (string.IsNullOrEmpty(roleName[0]))
+            {
+                return BadRequest("Role name must be provided.");
+            }
+
+            // Find the role by name
+            var role = await _roleManager.FindByNameAsync(roleName[0]);
+            if (role == null)
+            {
+                return NotFound($"Role '{roleName[0]}' not found.");
+            }
+
+            // Get users in the role
+            var userIds = await _userManager.GetUsersInRoleAsync(roleName[0]);
+            var users = userIds.ToList();
+
+            foreach (var user in users)
+            {
+                await _userManager.RemoveFromRoleAsync(user, roleName[0]);
+            }
+
+            var result = await _roleManager.DeleteAsync(role);
+            if (result.Succeeded)
+            {
+                return Ok("Roles removed successfully.");
+
+            }
+            return Ok(result);
         }
 
         [HttpPut("UpdateRole")]

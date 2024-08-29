@@ -89,6 +89,21 @@ namespace BlogWebAPI.Controllers
             return Ok(roles);
         }
 
+        [HttpPost("DeleteAccount")]
+        public async Task<ActionResult<string>> DeleteAccount([FromQuery] string id)
+        {
+            var result = await _userService.DeleteUser(id);
+
+            if (result != null)
+            {
+                return Ok(result);
+
+            }
+
+
+            return NotFound();
+        }
+
         [HttpPut("Update")]
         public async Task<IActionResult> UpdateUser([FromBody] UserDto userDto)
         {

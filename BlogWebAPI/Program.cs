@@ -47,7 +47,6 @@ namespace BlogWebAPI
             builder.Services.AddScoped(typeof(IUserService), typeof(UserService));
             builder.Services.AddScoped(typeof(IUserRepository<>), typeof(UserRepository<>));
             builder.Services.AddScoped(typeof(IUnitOfWork), typeof(UnitOfWork));
-            builder.Services.AddScoped(typeof(IUserService), typeof(UserService));
             builder.Services.AddSingleton<JwtSecurityTokenHandler>();
 
 

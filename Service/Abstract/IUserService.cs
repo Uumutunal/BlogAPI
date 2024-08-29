@@ -20,5 +20,6 @@ namespace Service.Abstract
         Task<string> GenerateJwtToken(UserDto userDto);
         Task<bool> UpdateUserRoleAsync(string userId, string roleName);
         Task<List<string>> GetAllRoles();
+        Task<IdentityResult> DeleteUser(string id);
     }
 }
