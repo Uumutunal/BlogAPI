@@ -13,5 +13,7 @@ namespace Domain.Entities
         public Post Post { get; set; }
         public Guid CategoryId { get; set; }
         public Category Category { get; set; }
+        public User User { get; set; }
+        public string UserId { get; set; }
     }
 }

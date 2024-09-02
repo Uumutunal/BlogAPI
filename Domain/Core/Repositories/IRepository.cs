@@ -14,5 +14,6 @@ namespace Domain.Core.Repositories
         Task<Guid> AddAsync(T entity);
         Task Update(T entity);
         Task Delete(Guid id);
+        Task<IEnumerable<T>> GetAllWithIncludes(params string[] includes);
     }
 }

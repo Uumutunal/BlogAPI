@@ -31,16 +31,35 @@ namespace Service.Concrete
             _categoryRepository = categoryRepository;
             _commentRepository = commentRepository;
         }
+        
+        public async Task<List<CategoryDto>> GetAllCategories()
+        {
+            var allCategories = await _categoryRepository.GetAllAsync();
+            var allCategoriesMapped = allCategories.Adapt<List<CategoryDto>>();
 
-
+            return allCategoriesMapped;
+        }
         public async Task<List<PostCategoryDto>> GetAllPostCategories()
         {
-            var allpostCategories = await _postCommentRepository.GetAllAsync();
+            var allpostCategories = await _postCategoryRepository.GetAllAsync();
             var allpostCategoriesMapped = allpostCategories.Adapt<List<PostCategoryDto>>();
 
             return allpostCategoriesMapped;
         }
+        public async Task<List<PostCommentDto>> GetAllPostComments()
+        {
+            var allpostCategories = await _postCommentRepository.GetAllAsync();
+            var allpostCategoriesMapped = allpostCategories.Adapt<List<PostCommentDto>>();
 
+            return allpostCategoriesMapped;
+        }
+        public async Task<List<CommentDto>> GetAllComments()
+        {
+            var allcomments = await _commentRepository.GetAllAsync();
+            var allcommentsMapped = allcomments.Adapt<List<CommentDto>>();
+
+            return allcommentsMapped;
+        }
         public async Task CreateCategory(CategoryDto categoryDto)
         {
             var category = categoryDto.Adapt<Category>();
@@ -95,9 +114,22 @@ namespace Service.Concrete
         {
             var postToBeApproved = await _postRepository.GetByIdAsync(id);
             postToBeApproved.IsApproved = true;
-            _postRepository.Update(postToBeApproved);
+            await _postRepository.Update(postToBeApproved);
         }
+        public async Task UpdatePost(PostDto post)
+        {
+            var postToUpdate = await _postRepository.GetByIdAsync(post.Id);
 
+            postToUpdate.Title = post.Title;
+            postToUpdate.Content = post.Content;
+
+            await _postRepository.Update(postToUpdate);
+        }
+        public async Task UpdatePostCategory(PostCategoryDto post)
+        {
+            var postToBeApproved = post.Adapt<PostCategory>();
+            await _postCategoryRepository.Update(postToBeApproved);
+        }
         public async Task ApproveComment(Guid id)
         {
             var commentToBeApproved = await _commentRepository.GetByIdAsync(id);
@@ -105,9 +137,9 @@ namespace Service.Concrete
             _commentRepository.Update(commentToBeApproved);
         }
 
-        public async Task CreatePost(PostDto postDto, List<Guid> categoryIds = null)
+        public async Task CreatePost(AddPostRequest request)
         {
-            var post = postDto.Adapt<Post>();
+            var post = request.Post.Adapt<Post>();
             post.CreatedDate = DateTime.Now;
             post.Id = Guid.NewGuid();
 
@@ -115,18 +147,32 @@ namespace Service.Concrete
 
 
             var allCategories = await _categoryRepository.GetAllAsync();
-            var categories = allCategories.Where(c => categoryIds.Contains(c.Id)).ToList();
+            var categories = allCategories.Where(c => request.CategoryIds.Contains(c.Id)).ToList();
 
             foreach (var category in categories)
             {
                 var postCategory = new PostCategoryDto
                 {
                     PostId = post.Id,
-                    CategoryId = category.Id
+                    CategoryId = category.Id,
+                    UserId = request.UserId
                 };
+                
                 var postCategories = postCategory.Adapt<PostCategory>();
                 await _postCategoryRepository.AddAsync(postCategories);
             }
+
+            //var postComment = new PostComment();
+
+            //postComment.CreatedDate = DateTime.Now;
+            //postComment.UserId = request.UserId;
+            //postComment.PostId = request.Post.Id;
+            //postComment.Id = Guid.NewGuid();
+            //postComment.CommentId = Guid.Empty;
+
+            //var mappedPostComment = postComment.Adapt<PostComment>();
+
+            //await _postCommentRepository.AddAsync(postComment);
 
         }
 
@@ -170,7 +216,35 @@ namespace Service.Concrete
             return mappedPost;
         }
 
+        public async Task<List<PostCommentDto>> GetAllPostCommentsWithIncludes(params string[] includes)
+        {
+            var allPosts = await _postCommentRepository.GetAllWithIncludes(includes);
 
+            //var postsMapped = allPosts.ToList().Adapt<List<PostCommentDto>>();
+
+            var postsMapped = allPosts.Select(post => new PostCommentDto
+            {
+                User = post.User,
+                UserId = post.UserId,
+                Comment = post.Comment,
+                CommentId = post.CommentId,
+                Post = post.Post,
+                PostId = post.PostId,
+                Id = post.Id
+
+            }).ToList();
+
+            return postsMapped;
+        }
+
+        public async Task<List<PostCategoryDto>> GetAllPostCategoriesWithIncludes(params string[] includes)
+        {
+            var allPosts = await _postCategoryRepository.GetAllWithIncludes(includes);
+
+            var postsMapped = allPosts.Adapt<List<PostCategoryDto>>();
+
+            return postsMapped;
+        }
 
     }
 }
