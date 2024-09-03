@@ -21,6 +21,7 @@ namespace Service.Abstract
         Task LikePost(int postId, int userId);
         Task<Guid> CreateComment(CommentDto commentDto);
         Task ApproveComment(Guid id);
+        Task<List<CommentDto>> GetAllUnApprovedComments();
         Task DeleteComment(Guid id);
         Task<PostDto> GetByIdAsync(Guid id);
         Task CreatePostComment(PostCommentDto postCommentDto);

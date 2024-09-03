@@ -56,9 +56,18 @@ namespace Service.Concrete
         public async Task<List<CommentDto>> GetAllComments()
         {
             var allcomments = await _commentRepository.GetAllAsync();
-            var allcommentsMapped = allcomments.Adapt<List<CommentDto>>();
+            var approvedComments = allcomments.Where(x => x.IsApproved);
+            var mappedComments = approvedComments.Adapt<List<CommentDto>>();
 
-            return allcommentsMapped;
+            return mappedComments;
+        }
+        public async Task<List<CommentDto>> GetAllUnApprovedComments()
+        {
+            var allcomments = await _commentRepository.GetAllAsync();
+            var approvedComments = allcomments.Where(x => !x.IsApproved);
+            var mappedComments = approvedComments.Adapt<List<CommentDto>>();
+
+            return mappedComments;
         }
         public async Task CreateCategory(CategoryDto categoryDto)
         {
@@ -116,6 +125,7 @@ namespace Service.Concrete
             postToBeApproved.IsApproved = true;
             await _postRepository.Update(postToBeApproved);
         }
+
         public async Task UpdatePost(PostDto post)
         {
             var postToUpdate = await _postRepository.GetByIdAsync(post.Id);
@@ -134,7 +144,7 @@ namespace Service.Concrete
         {
             var commentToBeApproved = await _commentRepository.GetByIdAsync(id);
             commentToBeApproved.IsApproved = true;
-            _commentRepository.Update(commentToBeApproved);
+            await _commentRepository.Update(commentToBeApproved);
         }
 
         public async Task CreatePost(AddPostRequest request)

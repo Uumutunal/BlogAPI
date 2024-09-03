@@ -126,6 +126,7 @@ namespace BlogWebAPI.Controllers
             user.Firstname = userDto.Firstname;
             user.Lastname = userDto.Lastname;
             user.Email = userDto.Email;
+            user.Photo = userDto.Photo;
 
             var updatedUser = await _userService.UpdateUser(user);
 

@@ -126,6 +126,7 @@ namespace Service.Concrete
                 user.Email = userDto.Email;
                 user.UserName = userDto.Email;
                 user.ModifiedDate = DateTime.Now;
+                user.Photo = userDto.Photo;
 
                 await _userManager.RemovePasswordAsync(user);
                 await _userManager.AddPasswordAsync(user, userDto.Password);

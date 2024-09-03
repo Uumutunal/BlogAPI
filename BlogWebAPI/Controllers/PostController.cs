@@ -1,10 +1,12 @@
 ﻿using Domain.Core.Repositories;
 using Domain.Entities;
+using Mapster;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Service.Abstract;
 using Service.Models;
+using System.ComponentModel.Design;
 using System.Text.Json;
 
 namespace BlogWebAPI.Controllers
@@ -16,7 +18,7 @@ namespace BlogWebAPI.Controllers
         private readonly IPostService _postService;
         private readonly IUserService _userService;
 
-        public PostController(IPostService postService,IUserService userService)
+        public PostController(IPostService postService, IUserService userService)
         {
             _postService = postService;
             _userService = userService;
@@ -35,6 +37,40 @@ namespace BlogWebAPI.Controllers
 
             return Ok(posts);
         }
+
+        [HttpGet("GetPost")]
+        public async Task<IActionResult> GetPost([FromQuery] Guid id)
+        {
+            var resultCommentAll = await _postService.GetAllPostCommentsWithIncludes(new[] {"User", "Comment", "Post"});
+            var resultComment = resultCommentAll.Where(x => x.PostId == id).ToList();
+
+            var resultCategoryAll = await _postService.GetAllPostCategoriesWithIncludes(new[] {"Category"});
+            var resultCategory = resultCategoryAll.FirstOrDefault(x => x.PostId == id);
+
+
+            var response = new List<PostResponse>();
+
+            foreach (var item in resultComment)
+            {
+
+                var rep = new PostResponse()
+                {
+                    Comment = item.Comment.Adapt<CommentDto>(),
+                    User = item.User.Adapt<UserDto>(),
+                    Post = item.Post.Adapt<PostDto>(),
+                    Category = resultCategory == null ? null : resultCategory.Category.Adapt<CategoryDto>(),
+                };
+
+                response.Add(rep);
+            }
+
+
+
+            return Ok(response);
+
+        }
+
+
 
         [HttpGet("GetAllPostComments")]
         public async Task<IActionResult> GetAllPostComments()
@@ -60,6 +96,21 @@ namespace BlogWebAPI.Controllers
             if (comments == null || !comments.Any())
             {
                 return NotFound("No posts found.");
+            }
+
+            return Ok(comments);
+
+        }
+
+        [HttpGet("GetAllUnApprovedComments")]
+        public async Task<IActionResult> GetAllUnApprovedComments()
+        {
+            var comments = await _postService.GetAllUnApprovedComments();
+
+
+            if (comments == null || !comments.Any())
+            {
+                return Ok(new List<CommentDto>() { });
             }
 
             return Ok(comments);
@@ -115,10 +166,10 @@ namespace BlogWebAPI.Controllers
         {
             var posts = await _postService.GetAllUnApprovedPosts();
 
-            if (posts == null || !posts.Any())
-            {
-                return NotFound("No posts found.");
-            }
+            //if (posts == null || !posts.Any())
+            //{
+            //    return NotFound("No posts found.");
+            //}
 
             return Ok(posts);
         }
@@ -126,13 +177,13 @@ namespace BlogWebAPI.Controllers
         [HttpPost("AddComment")]
         public async Task AddComment([FromBody] AddCommentRequest request)
         {
-           var comment =  await _postService.CreateComment(request.Comment);
-            
+            var commentId = await _postService.CreateComment(request.Comment);
 
-            var postcomment = new PostCommentDto(){
+            var postcomment = new PostCommentDto()
+            {
                 PostId = request.PostId,
                 UserId = request.UserId,
-                CommentId = request.Comment.Id,
+                CommentId = commentId,
             };
             await _postService.CreatePostComment(postcomment);
         }
@@ -163,8 +214,30 @@ namespace BlogWebAPI.Controllers
             }
         }
 
+        [HttpPost("DeleteCategory")]
+        public async Task<IActionResult> DeleteCategory([FromBody] Guid id)
+        {
+            try
+            {
+                await _postService.DeleteCategory(id);
+                return Ok(new { result = "Category deleted successfully" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [HttpPost("ApproveComment")]
+        public async Task<IActionResult> ApproveComment([FromBody] Guid id)
+        {
+            await _postService.ApproveComment(id);
+
+            return Ok();
+        }
+
         [HttpPost("DeleteComment")]
-        public async Task<IActionResult> DeleteComment(Guid id)
+        public async Task<IActionResult> DeleteComment([FromBody] Guid id)
         {
             try
             {
