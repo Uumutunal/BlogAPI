@@ -231,6 +231,20 @@ namespace Service.Concrete
             return roles;
         }
 
+        public async Task<List<string>> GetUserRoleById(string id)
+        {
+            var user = await _userManager.FindByEmailAsync(id);
+
+            if (user != null)
+            {
+                var roles = await _userManager.GetRolesAsync(user);
+                return roles.ToList();
+            }
+
+            return null;
+
+        }
+
 
 
         public async Task<string> GenerateJwtToken(UserDto userDto)

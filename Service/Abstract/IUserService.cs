@@ -21,5 +21,6 @@ namespace Service.Abstract
         Task<bool> UpdateUserRoleAsync(string userId, string roleName);
         Task<List<string>> GetAllRoles();
         Task<IdentityResult> DeleteUser(string id);
+        Task<List<string>> GetUserRoleById(string id);
     }
 }

@@ -89,6 +89,19 @@ namespace BlogWebAPI.Controllers
             return Ok(roles);
         }
 
+        [HttpGet("GetUserRoleById")]
+        public async Task<ActionResult<string>> GetUserRoleById([FromQuery] string id)
+        {
+            var roles = await _userService.GetUserRoleById(id);
+
+            if(roles != null)
+            {
+                return Ok(roles);
+            }
+
+            return NotFound();
+        }
+
         [HttpPost("DeleteAccount")]
         public async Task<ActionResult<string>> DeleteAccount([FromQuery] string id)
         {

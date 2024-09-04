@@ -1,4 +1,5 @@
-﻿using Domain.Core.Repositories;
+﻿using Azure.Core;
+using Domain.Core.Repositories;
 using Domain.Entities;
 using Mapster;
 using Microsoft.AspNetCore.Http;
@@ -6,6 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Service.Abstract;
 using Service.Models;
+using System.ComponentModel;
 using System.ComponentModel.Design;
 using System.Text.Json;
 
@@ -144,6 +146,22 @@ namespace BlogWebAPI.Controllers
 
             return Ok(posts);
         }
+        [HttpGet("GetAllPostTags")]
+        public async Task<IActionResult> GetAllPostTags()
+        {
+            var allPostTags = await _postService.GetAllPostTags();
+            var allTags = await _postService.GetAllTags();
+
+
+            foreach (var tag in allPostTags)
+            {
+                tag.Tag = allTags.FirstOrDefault(x => x.Id == tag.TagId);
+            }
+
+            return Ok(allPostTags);
+        }
+
+
 
         [HttpPost("ApprovePost")]
         public async Task<IActionResult> ApprovePost([FromBody] Guid id)
@@ -152,11 +170,36 @@ namespace BlogWebAPI.Controllers
 
             return Ok();
         }
+        [HttpPost("AddPost")]
+        public async Task<IActionResult> AddPost([FromBody] AddPostRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            await _postService.CreatePost(request);
+            return Ok("Post created successfully.");
+        }
         [HttpPost("UpdatePost")]
         public async Task<IActionResult> UpdatePost([FromBody] AddPostRequest postToUpdate)
         {
 
-            await _postService.UpdatePost(postToUpdate.Post);
+            foreach (var item in postToUpdate.PostTagIds)
+            {
+                await _postService.DeletePostTag(item);
+            }
+
+            await _postService.UpdatePost(postToUpdate);
+
+            return Ok();
+        }
+
+        [HttpPost("UpdateComment")]
+        public async Task<IActionResult> UpdateComment([FromBody] CommentDto comment)
+        {
+
+            await _postService.UpdateComment(comment);
 
             return Ok();
         }
@@ -188,17 +231,7 @@ namespace BlogWebAPI.Controllers
             await _postService.CreatePostComment(postcomment);
         }
 
-        [HttpPost("AddPost")]
-        public async Task<IActionResult> AddPost([FromBody] AddPostRequest request)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
 
-            await _postService.CreatePost(request);
-            return Ok("Post created successfully.");
-        }
 
         [HttpPost("DeletePost")]
         public async Task<IActionResult> DeletePost(Guid id)

@@ -1,4 +1,5 @@
 ﻿
+using Azure.Core;
 using Domain.Core.Repositories;
 using Domain.Entities;
 using Mapster;
@@ -21,8 +22,10 @@ namespace Service.Concrete
         private readonly IRepository<PostCategory> _postCategoryRepository;
         private readonly IRepository<Category> _categoryRepository;
         private readonly IRepository<Comment> _commentRepository;
+        private readonly IRepository<PostTag> _postTagRepository;
+        private readonly IRepository<Tag> _tagRepository;
 
-        public PostService(IUnitOfWork unitOfWork, IRepository<Post> postRepository, IRepository<PostComment> postCommentRepository, IRepository<PostCategory> postCategoryRepository, IRepository<Category> categoryRepository, IRepository<Comment> commentRepository)
+        public PostService(IUnitOfWork unitOfWork, IRepository<Post> postRepository, IRepository<PostComment> postCommentRepository, IRepository<PostCategory> postCategoryRepository, IRepository<Category> categoryRepository, IRepository<Comment> commentRepository, IRepository<PostTag> postTagRepository, IRepository<Tag> tagRepository)
         {
             _unitOfWork = unitOfWork;
             _postRepository = postRepository;
@@ -30,8 +33,10 @@ namespace Service.Concrete
             _postCategoryRepository = postCategoryRepository;
             _categoryRepository = categoryRepository;
             _commentRepository = commentRepository;
+            _postTagRepository = postTagRepository;
+            _tagRepository = tagRepository;
         }
-        
+
         public async Task<List<CategoryDto>> GetAllCategories()
         {
             var allCategories = await _categoryRepository.GetAllAsync();
@@ -81,6 +86,10 @@ namespace Service.Concrete
         {
             await _categoryRepository.Delete(id);
         }
+        public async Task DeletePostTag(Guid id)
+        {
+            await _postTagRepository.Delete(id);
+        }
 
         public async Task<bool> UpdateCategory(Guid id, CategoryDto categoryDto)
         {
@@ -97,7 +106,17 @@ namespace Service.Concrete
 
             return true;
         }
+        public async Task<bool> UpdateComment(CommentDto comment)
+        {
 
+            var commentToUpdate = await _commentRepository.GetByIdAsync(comment.Id);
+
+            commentToUpdate.Content = comment.Content;
+            commentToUpdate.ModifiedDate = DateTime.Now;
+            await _commentRepository.Update(commentToUpdate);
+
+            return true;
+        }
         public async Task<Guid> CreateComment(CommentDto commentDto)
         {
             var comment = commentDto.Adapt<Comment>();
@@ -126,12 +145,33 @@ namespace Service.Concrete
             await _postRepository.Update(postToBeApproved);
         }
 
-        public async Task UpdatePost(PostDto post)
+        public async Task UpdatePost(AddPostRequest request)
         {
-            var postToUpdate = await _postRepository.GetByIdAsync(post.Id);
+            var postToUpdate = await _postRepository.GetByIdAsync(request.Post.Id);
 
-            postToUpdate.Title = post.Title;
-            postToUpdate.Content = post.Content;
+            postToUpdate.Title = request.Post.Title;
+            postToUpdate.Content = request.Post.Content;
+            postToUpdate.Photo = request.Post.Photo;
+
+
+            foreach (var tag in request.Tags)
+            {
+                var newTag = new TagDto()
+                {
+                    Id = Guid.NewGuid(),
+                    Title = tag
+                };
+
+                var tagId = await _tagRepository.AddAsync(newTag.Adapt<Tag>());
+
+                var postTag = new PostTagDto()
+                {
+                    PostId = request.Post.Id,
+                    TagId = tagId
+                };
+
+                await _postTagRepository.AddAsync(postTag.Adapt<PostTag>());
+            }
 
             await _postRepository.Update(postToUpdate);
         }
@@ -167,10 +207,32 @@ namespace Service.Concrete
                     CategoryId = category.Id,
                     UserId = request.UserId
                 };
-                
+
                 var postCategories = postCategory.Adapt<PostCategory>();
                 await _postCategoryRepository.AddAsync(postCategories);
             }
+
+
+
+            foreach (var tag in request.Tags)
+            {
+                var newTag = new TagDto()
+                {
+                    Id = Guid.NewGuid(),
+                    Title = tag
+                };
+
+                var tagId = await _tagRepository.AddAsync(newTag.Adapt<Tag>());
+
+                var postTag = new PostTagDto()
+                {
+                    PostId = post.Id,
+                    TagId = tagId
+                };
+
+                await _postTagRepository.AddAsync(postTag.Adapt<PostTag>());
+            }
+
 
             //var postComment = new PostComment();
 
@@ -224,6 +286,36 @@ namespace Service.Concrete
             var post = await _postRepository.GetByIdAsync(id);
             var mappedPost = post.Adapt<PostDto>();
             return mappedPost;
+        }
+        public async Task<List<TagDto>> GetAllTags()
+        {
+            var allTags = await _tagRepository.GetAllAsync();
+            //Mapper Çalışmıyor
+            //var allTagsMapped = allTags.Adapt<List<TagDto>>();
+            var allTagsMapped = new List<TagDto>();
+
+            foreach (var item in allTags)
+            {
+                var newTag = new TagDto()
+                {
+                    Id = item.Id,
+                    Title = item.Title,
+                    CreatedDate = item.CreatedDate,
+                };
+
+                allTagsMapped.Add(newTag);
+            }
+
+
+            return allTagsMapped;
+        }
+        public async Task<List<PostTagDto>> GetAllPostTags()
+        {
+            var allPostTags = await _postTagRepository.GetAllAsync();
+
+            var allPostTagsMapped = allPostTags.Adapt<List<PostTagDto>>();
+
+            return allPostTagsMapped;
         }
 
         public async Task<List<PostCommentDto>> GetAllPostCommentsWithIncludes(params string[] includes)
