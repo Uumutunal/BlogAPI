@@ -10,6 +10,6 @@ namespace Service.Models
     public class TagDto : BaseDto
     {
         public string Title { get; set; }
-        public List<PostTag> PostTags { get; set; }
+        public List<PostTagDto> PostTags { get; set; }
     }
 }

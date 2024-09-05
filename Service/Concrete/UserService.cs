@@ -11,6 +11,7 @@ using Service.Abstract;
 using Service.Models;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
@@ -60,7 +61,22 @@ namespace Service.Concrete
             return mappedUser;
 
         }
+        public async Task<IdentityResult> DeleteUser(string id)
+        {
 
+
+            var user = _userManager.Users.FirstOrDefault(x => x.Id == id);
+            if (user != null)
+            {
+
+                var result = await _userManager.DeleteAsync(user);
+
+                return result;
+            }
+
+            return null;
+
+        }
         public async Task<UserDto> Login(string email, string password)
         {
 
@@ -86,6 +102,7 @@ namespace Service.Concrete
                 Email = userDto.Email,
                 Firstname = userDto.Firstname,
                 Lastname = userDto.Lastname,
+                Photo = userDto.Photo,
             };
             var result = await _userManager.CreateAsync(user, userDto.Password);
 
@@ -99,14 +116,30 @@ namespace Service.Concrete
             return null;
         }
 
-        public async Task UpdateUser(UserDto userDto)
+        public async Task<IdentityUser> UpdateUser(UserDto userDto)
         {
             var user = await _userManager.FindByIdAsync(userDto.Id);
             if (user != null)
             {
-                await _userManager.UpdateAsync(user);
-            }
+                user.Firstname = userDto.Firstname;
+                user.Lastname = userDto.Lastname;
+                user.Email = userDto.Email;
+                user.UserName = userDto.Email;
+                user.ModifiedDate = DateTime.Now;
+                user.Photo = userDto.Photo;
 
+                await _userManager.RemovePasswordAsync(user);
+                await _userManager.AddPasswordAsync(user, userDto.Password);
+
+                if (!string.IsNullOrWhiteSpace(userDto.Password))
+                {
+                    user.PasswordHash = _userManager.PasswordHasher.HashPassword(user, userDto.Password);
+                }
+
+                await _userManager.UpdateAsync(user);
+                return user;
+            }
+            return null;
         }
 
         public async Task<bool> UpdateUserRoleAsync(string userId, string roleName)
@@ -120,7 +153,7 @@ namespace Service.Concrete
             var roleManager = _serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
             var roleExist = await roleManager.RoleExistsAsync(roleName);
-            
+
             if (roleExist == null)
             {
                 return false;
@@ -140,7 +173,7 @@ namespace Service.Concrete
                 return false;
             }
 
-            return true; 
+            return true;
 
         }
 
@@ -188,6 +221,32 @@ namespace Service.Concrete
             }
         }
 
+        public async Task<List<string>> GetAllRoles()
+        {
+            var roleManager = _serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+
+            var roles = roleManager.Roles.Select(r => r.Name).ToList();
+
+            return roles;
+        }
+
+        public async Task<List<string>> GetUserRoleById(string id)
+        {
+            var user = await _userManager.FindByEmailAsync(id);
+
+            if (user != null)
+            {
+                var roles = await _userManager.GetRolesAsync(user);
+                return roles.ToList();
+            }
+
+            return null;
+
+        }
+
+
+
         public async Task<string> GenerateJwtToken(UserDto userDto)
         {
             if (userDto == null)
@@ -201,13 +260,22 @@ namespace Service.Concrete
             var key = _configuration["JwtTokenSettings:Key"];
             var lifetime = Convert.ToDouble(_configuration["JwtTokenSettings:Lifetime"]);
 
+            var user = _userManager.Users.FirstOrDefault(x => x.Id == userDto.Id);
+            var roles = await _userManager.GetRolesAsync(user);
+
             // JWT için claim'leri oluştur
-            var claims = new[]
+            var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub, userDto.Email ?? string.Empty),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(ClaimTypes.NameIdentifier, userDto.Id ?? string.Empty)
+                new Claim(ClaimTypes.NameIdentifier, userDto.Id ?? string.Empty),
+                new Claim(ClaimTypes.Name, userDto.Email ?? string.Empty)
             };
+
+            foreach (var role in roles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
 
             // Şifreleme anahtarını ve kimlik doğrulama bilgilerini ayarla
             var keyBytes = Encoding.UTF8.GetBytes(key);

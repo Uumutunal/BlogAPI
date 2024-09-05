@@ -28,6 +28,7 @@ namespace Infrastructure.Repositories
 
         public async Task<Guid> AddAsync(T entity)
         {
+            entity.CreatedDate = DateTime.Now;
             await _entities.AddAsync(entity);
             //_context.SaveChanges();
             await _unitOfWork.SaveChangesAsync();
@@ -52,14 +53,34 @@ namespace Infrastructure.Repositories
         }
 
 
-        public void Update(T entity)
+        public async Task Update(T entity)
         {
-            _unitOfWork.SaveChangesAsync();
+            entity.ModifiedDate = DateTime.Now;
+
+            if (_entities.Local.All(e => e != entity))
+            {
+                _entities.Attach(entity);
+            }
+
+            _entities.Update(entity);
+            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task<IList<T>> GetAllAsync()
         {
             return await _entities.Where(x => !x.IsDeleted).ToListAsync();
+        }
+
+        public async Task<IEnumerable<T>> GetAllWithIncludes(params string[] includes)
+        {
+            IQueryable<T> query = _entities;
+
+            foreach (var include in includes)
+            {
+                query = query.Include(include);
+            }
+
+            return await query.Where(x => !x.IsDeleted).ToListAsync();
         }
     }
 }

@@ -11,6 +11,6 @@ namespace Service.Models
     {
         public string Content { get; set; }
         public bool IsApproved { get; set; }
-        public List<PostComment> PostComments { get; set; }
+
     }
 }

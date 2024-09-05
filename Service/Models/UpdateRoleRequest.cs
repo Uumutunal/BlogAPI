@@ -1,6 +1,4 @@
-
-﻿using Domain.Entities;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace Service.Models
 {
-    public class CategoryDto : BaseDto
+    public  class UpdateRoleRequest
     {
-        public string Name { get; set; }
-
+        public string UserId { get; set; }
+        public string RoleName { get; set; }
     }
 }
