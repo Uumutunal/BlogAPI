@@ -159,14 +159,6 @@ namespace Service.Concrete
                 return false;
             }
 
-            var currentRoles = await _userManager.GetRolesAsync(user);
-
-            var removeResult = await _userManager.RemoveFromRolesAsync(user, currentRoles);
-            if (!removeResult.Succeeded)
-            {
-                return false;
-            }
-
             var addResult = await _userManager.AddToRoleAsync(user, roleName);
             if (!addResult.Succeeded)
             {
@@ -175,6 +167,32 @@ namespace Service.Concrete
 
             return true;
 
+        }
+
+        public async Task<bool> RemoveUserRole(string userId, string roleName)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return false;
+            }
+
+            var roleManager = _serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+            var roleExist = await roleManager.RoleExistsAsync(roleName);
+
+            if (roleExist == null)
+            {
+                return false;
+            }
+
+
+            var removeResult = await _userManager.RemoveFromRolesAsync(user, new List<string>() { roleName });
+            if (!removeResult.Succeeded)
+            {
+                return false;
+            }
+            return true;
         }
 
         public async Task AssignRoleToUser(string userEmail, string roleName)

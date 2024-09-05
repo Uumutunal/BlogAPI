@@ -89,6 +89,7 @@ namespace BlogWebAPI.Controllers
             return Ok(roles);
         }
 
+
         [HttpGet("GetUserRoleById")]
         public async Task<ActionResult<string>> GetUserRoleById([FromQuery] string id)
         {
@@ -135,11 +136,20 @@ namespace BlogWebAPI.Controllers
             {
                 user.Password = userDto.ConfirmPassword;
             }
+            else
+            {
+                user.Password = userDto.Password;
+            }
 
             user.Firstname = userDto.Firstname;
             user.Lastname = userDto.Lastname;
             user.Email = userDto.Email;
-            user.Photo = userDto.Photo;
+
+            if(userDto.Photo != null)
+            {
+                user.Photo = userDto.Photo;
+            }
+
 
             var updatedUser = await _userService.UpdateUser(user);
 

@@ -32,11 +32,6 @@ namespace BlogWebAPI.Controllers
             var posts = await _postService.GetAllPostCategories();
 
 
-            if (posts == null || !posts.Any())
-            {
-                return NotFound("No posts found.");
-            }
-
             return Ok(posts);
         }
 
@@ -80,10 +75,6 @@ namespace BlogWebAPI.Controllers
             var posts = await _postService.GetAllPostComments();
 
 
-            if (posts == null || !posts.Any())
-            {
-                return NotFound("No posts found.");
-            }
 
             return Ok(posts);
 
@@ -94,11 +85,6 @@ namespace BlogWebAPI.Controllers
         {
             var comments = await _postService.GetAllComments();
 
-
-            if (comments == null || !comments.Any())
-            {
-                return NotFound("No posts found.");
-            }
 
             return Ok(comments);
 
@@ -125,11 +111,6 @@ namespace BlogWebAPI.Controllers
             var categories = await _postService.GetAllCategories();
 
 
-            if (categories == null || !categories.Any())
-            {
-                return NotFound("No posts found.");
-            }
-
             return Ok(categories);
 
         }
@@ -139,10 +120,6 @@ namespace BlogWebAPI.Controllers
         {
             var posts = await _postService.GetAllPosts();
 
-            if (posts == null || !posts.Any())
-            {
-                return NotFound("No posts found.");
-            }
 
             return Ok(posts);
         }

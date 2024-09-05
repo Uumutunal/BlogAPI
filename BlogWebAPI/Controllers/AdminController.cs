@@ -135,6 +135,26 @@ namespace BlogWebAPI.Controllers
 
             return Ok();
         }
+        [HttpPut("RemoveUserRole")]
+        public async Task<IActionResult> RemoveUserRole([FromBody] UpdateRoleRequest request)
+        {
+
+            var user = await _userManager.FindByEmailAsync(request.UserId);
+
+            if (string.IsNullOrEmpty(request.RoleName))
+            {
+                return BadRequest("Role name cannot be null or empty.");
+            }
+
+            var result = await _userService.RemoveUserRole(user.Id, request.RoleName);
+
+            if (!result)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Error updating user role.");
+            }
+
+            return Ok();
+        }
 
         [HttpPost("CreateCategory")]
         public async Task<IActionResult> CreateCategory([FromBody] CategoryDto categoryDto)

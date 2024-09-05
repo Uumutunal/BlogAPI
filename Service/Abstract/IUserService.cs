@@ -16,6 +16,7 @@ namespace Service.Abstract
         Task<UserDto> GetUserById(string id);
         Task<IdentityUser> UpdateUser(UserDto userDto);
         Task AssignRoleToUser(string userEmail, string roleName);
+        Task<bool> RemoveUserRole(string userId, string roleName);
         Task AddRole(string[] roles);
         Task<string> GenerateJwtToken(UserDto userDto);
         Task<bool> UpdateUserRoleAsync(string userId, string roleName);
