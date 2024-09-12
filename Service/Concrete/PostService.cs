@@ -256,8 +256,17 @@ namespace Service.Concrete
         public async Task<List<PostDto>> GetAllPosts()
         {
             var posts = await _postRepository.GetAllAsync();
-            var approvedPosts = posts.Where(x => x.IsApproved);
+            var approvedPosts = posts.Where(x => x.IsApproved && !x.IsDraft);
             var mappedPosts = approvedPosts.Adapt<List<PostDto>>();
+
+            return mappedPosts;
+        }
+
+        public async Task<List<PostDto>> GetDrafts()
+        {
+            var posts = await _postRepository.GetAllAsync();
+            var draftPosts = posts.Where(x => x.IsDraft);
+            var mappedPosts = draftPosts.Adapt<List<PostDto>>();
 
             return mappedPosts;
         }
@@ -348,5 +357,11 @@ namespace Service.Concrete
             return postsMapped;
         }
 
+        public async Task UpdateDraft(Guid id)
+        {
+            var postToBeUpdated = await _postRepository.GetByIdAsync(id);
+            postToBeUpdated.IsDraft = false;
+            await _postRepository.Update(postToBeUpdated);
+        }
     }
 }

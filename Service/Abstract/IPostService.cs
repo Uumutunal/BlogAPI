@@ -12,9 +12,11 @@ namespace Service.Abstract
     {
         Task CreatePost(AddPostRequest request);
         Task<List<PostDto>> GetAllPosts();
+        Task<List<PostDto>> GetDrafts();
         Task<List<PostDto>> GetAllUnApprovedPosts();
         Task<List<CategoryDto>> GetAllCategories();
         Task ApprovePost(Guid id);
+        Task UpdateDraft(Guid id);
         Task DeletePost(Guid id);
         Task UpdatePost(AddPostRequest request);
         Task UpdatePostCategory(PostCategoryDto post);

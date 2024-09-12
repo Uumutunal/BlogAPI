@@ -90,6 +90,16 @@ namespace BlogWebAPI.Controllers
 
         }
 
+        [HttpGet("GetAllIsDraft")]
+        public async Task<IActionResult> GetAllIsDraft()
+        {
+            var drafts = await _postService.GetDrafts();
+
+
+            return Ok(drafts);
+
+        }
+
         [HttpGet("GetAllUnApprovedComments")]
         public async Task<IActionResult> GetAllUnApprovedComments()
         {
@@ -168,6 +178,15 @@ namespace BlogWebAPI.Controllers
             }
 
             await _postService.UpdatePost(postToUpdate);
+
+            return Ok();
+        }
+
+        [HttpPost("UpdateDraft")]
+        public async Task<IActionResult> UpdateDraft([FromBody] Guid id)
+        {
+
+            await _postService.UpdateDraft(id);
 
             return Ok();
         }
