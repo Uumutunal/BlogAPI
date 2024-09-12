@@ -151,8 +151,12 @@ namespace Service.Concrete
 
             postToUpdate.Title = request.Post.Title;
             postToUpdate.Content = request.Post.Content;
-            postToUpdate.Photo = request.Post.Photo;
+            //postToUpdate.Photo = request.Post.Photo;
 
+            if (request.Post.Photo != null)
+            {
+                postToUpdate.Photo = request.Post.Photo;
+            }
 
             foreach (var tag in request.Tags)
             {
@@ -279,7 +283,7 @@ namespace Service.Concrete
         public async Task<List<PostDto>> GetAllUnApprovedPosts()
         {
             var posts = await _postRepository.GetAllAsync();
-            var approvedPosts = posts.Where(x => !x.IsApproved);
+            var approvedPosts = posts.Where(x => !x.IsApproved && !x.IsDraft);
             var mappedPosts = approvedPosts.Adapt<List<PostDto>>();
 
             return mappedPosts;

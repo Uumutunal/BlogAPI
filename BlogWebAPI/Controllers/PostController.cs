@@ -230,7 +230,7 @@ namespace BlogWebAPI.Controllers
 
 
         [HttpPost("DeletePost")]
-        public async Task<IActionResult> DeletePost(Guid id)
+        public async Task<IActionResult> DeletePost([FromBody] Guid id)
         {
             try
             {
