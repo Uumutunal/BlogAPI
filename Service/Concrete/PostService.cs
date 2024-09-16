@@ -24,8 +24,9 @@ namespace Service.Concrete
         private readonly IRepository<Comment> _commentRepository;
         private readonly IRepository<PostTag> _postTagRepository;
         private readonly IRepository<Tag> _tagRepository;
+        private readonly IRepository<FavoritePost> _favoritePostRepository;
 
-        public PostService(IUnitOfWork unitOfWork, IRepository<Post> postRepository, IRepository<PostComment> postCommentRepository, IRepository<PostCategory> postCategoryRepository, IRepository<Category> categoryRepository, IRepository<Comment> commentRepository, IRepository<PostTag> postTagRepository, IRepository<Tag> tagRepository)
+        public PostService(IUnitOfWork unitOfWork, IRepository<Post> postRepository, IRepository<PostComment> postCommentRepository, IRepository<PostCategory> postCategoryRepository, IRepository<Category> categoryRepository, IRepository<Comment> commentRepository, IRepository<PostTag> postTagRepository, IRepository<Tag> tagRepository, IRepository<FavoritePost> favoritePostRepository)
         {
             _unitOfWork = unitOfWork;
             _postRepository = postRepository;
@@ -35,6 +36,7 @@ namespace Service.Concrete
             _commentRepository = commentRepository;
             _postTagRepository = postTagRepository;
             _tagRepository = tagRepository;
+            _favoritePostRepository = favoritePostRepository;
         }
 
         public async Task<List<CategoryDto>> GetAllCategories()
@@ -116,6 +118,18 @@ namespace Service.Concrete
             await _commentRepository.Update(commentToUpdate);
 
             return true;
+        }
+
+        public async Task CreateFavoritePost(FavoritePostDto favoritePostDto)
+        {
+            await _favoritePostRepository.AddAsync(favoritePostDto.Adapt<FavoritePost>());
+        }
+        public async Task<List<FavoritePostDto>> GetAllUserFavorites()
+        {
+            var allFavoritePosts = await _favoritePostRepository.GetAllAsync();
+            //var userFavorites = allFavoritePosts.Where(x => x.UserId == userId).ToList();
+            var userFavoritesMapped = allFavoritePosts.Adapt<List<FavoritePostDto>>();
+            return userFavoritesMapped;
         }
         public async Task<Guid> CreateComment(CommentDto commentDto)
         {
@@ -250,6 +264,10 @@ namespace Service.Concrete
 
             //await _postCommentRepository.AddAsync(postComment);
 
+        }
+        public async Task DeleteFavorite(Guid id)
+        {
+            await _favoritePostRepository.Delete(id);
         }
 
         public async Task DeletePost(Guid id)
