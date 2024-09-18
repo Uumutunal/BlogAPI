@@ -278,5 +278,27 @@ namespace BlogWebAPI.Controllers
                 return BadRequest(new { error = ex.Message });
             }
         }
+
+        [HttpGet("GetNotification")]
+        public async Task<IActionResult> GetNotifications()
+        {
+            var notifications = await _postService.GetNotificationsByUserId();
+
+            if (notifications == null || !notifications.Any())
+            {
+                return NotFound("Herhangi bir bildiriminiz yok.");
+            }
+
+            return Ok(notifications);
+        }
+
+        [HttpPost("UpdateNotification")]
+        public async Task<IActionResult> UpdateNotification([FromBody] List<Guid> id)
+        {
+
+            await _postService.UpdateNotification(id);
+
+            return Ok();
+        }
     }
 }

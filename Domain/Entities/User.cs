@@ -18,8 +18,10 @@ namespace Domain.Entities
         public DateTime? ModifiedDate { get; set; }
         public DateTime? DeletedDate { get; set; }
         public bool IsDeleted { get; set; } = false;
-            
+
         //public List<Post> Posts { get; set; }
+
+        public List<Notification>? Notifications { get; set; }
 
         public List<PostComment> PostComments { get; set; }
     }
