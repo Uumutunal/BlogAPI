@@ -31,7 +31,10 @@ namespace Service.Abstract
         Task<List<PostTagDto>> GetAllPostTags();
         Task<List<TagDto>> GetAllTags();
         Task CreatePostComment(PostCommentDto postCommentDto);
+        Task CreateFavoritePost(FavoritePostDto favoritePostDto);
+        Task<List<FavoritePostDto>> GetAllUserFavorites();
         Task CreateCategory(CategoryDto categoryDto);
+        Task DeleteFavorite(Guid id);
         Task DeleteCategory(Guid id);
         Task<bool> UpdateCategory(Guid id, CategoryDto categoryDto);
         Task<List<PostCategoryDto>> GetAllPostCategories();

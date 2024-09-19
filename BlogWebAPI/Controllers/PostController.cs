@@ -38,10 +38,10 @@ namespace BlogWebAPI.Controllers
         [HttpGet("GetPost")]
         public async Task<IActionResult> GetPost([FromQuery] Guid id)
         {
-            var resultCommentAll = await _postService.GetAllPostCommentsWithIncludes(new[] {"User", "Comment", "Post"});
+            var resultCommentAll = await _postService.GetAllPostCommentsWithIncludes(new[] { "User", "Comment", "Post" });
             var resultComment = resultCommentAll.Where(x => x.PostId == id).ToList();
 
-            var resultCategoryAll = await _postService.GetAllPostCategoriesWithIncludes(new[] {"Category"});
+            var resultCategoryAll = await _postService.GetAllPostCategoriesWithIncludes(new[] { "Category" });
             var resultCategory = resultCategoryAll.FirstOrDefault(x => x.PostId == id);
 
 
@@ -227,7 +227,37 @@ namespace BlogWebAPI.Controllers
             await _postService.CreatePostComment(postcomment);
         }
 
+        [HttpPost("AddToFavorites")]
+        public async Task<IActionResult> AddToFavorites([FromBody] FavoritePostRequest request)
+        {
+            var favoritePostDto = new FavoritePostDto() { PostId = request.PostId, UserId = request.UserId };
 
+            await _postService.CreateFavoritePost(favoritePostDto);
+
+            return Ok();
+        }
+        [HttpGet("GetAllUserFavorites")]
+        public async Task<IActionResult> GetAllUserFavorites()
+        {
+            var favoritePosts = await _postService.GetAllUserFavorites();
+
+            return Ok(favoritePosts);
+        }
+        [HttpPost("RemoveFromFavorites")]
+        public async Task<IActionResult> RemoveFromFavorites([FromBody] Guid postId)
+        {
+
+            //var allFavorites = await _postService.GetAllUserFavorites();
+
+            //var post = allFavorites.FirstOrDefault(x => x.PostId == postToDelete.PostId && x.UserId == postToDelete.UserId);
+            //if(post != null)
+            //{
+            //    await _postService.DeleteFavorite(post.Id);
+            //}
+            await _postService.DeleteFavorite(postId);
+
+            return Ok();
+        }
 
         [HttpPost("DeletePost")]
         public async Task<IActionResult> DeletePost([FromBody] Guid id)
