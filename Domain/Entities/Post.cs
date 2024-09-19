@@ -17,6 +17,7 @@ namespace Domain.Entities
         public string? Photo { get; set; }
         public bool IsApproved { get; set; } = false;
         public int Likes { get; set; }
+        public bool IsDraft { get; set; }
 
 
         //public string UserId { get; set; }

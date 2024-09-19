@@ -162,6 +162,29 @@ namespace BlogWebAPI.Controllers
 
             return Ok(user);
         }
+
+        [HttpPost("Follow")]
+        public async Task<IActionResult> FollowUser([FromBody] FollowerDto followerDto)
+        {
+            await _userService.FollowUser(followerDto);
+            return Ok();
+        }
+
+        [HttpPost("UnFollow")]
+        public async Task<IActionResult> UnFollowUser([FromBody] Guid id)
+        {
+            await _userService.UnFollowUser(id);
+            return Ok();
+        }
+
+        [HttpGet("GetAllFollowers")]
+        public async Task<IActionResult> GetAllFollowers()
+        {
+            var followers = await _userService.GetAllFollowerUser();
+
+            return Ok(followers);
+        }
+
     }
 
 }

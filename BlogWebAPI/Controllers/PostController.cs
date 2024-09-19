@@ -90,6 +90,16 @@ namespace BlogWebAPI.Controllers
 
         }
 
+        [HttpGet("GetAllIsDraft")]
+        public async Task<IActionResult> GetAllIsDraft()
+        {
+            var drafts = await _postService.GetDrafts();
+
+
+            return Ok(drafts);
+
+        }
+
         [HttpGet("GetAllUnApprovedComments")]
         public async Task<IActionResult> GetAllUnApprovedComments()
         {
@@ -172,6 +182,15 @@ namespace BlogWebAPI.Controllers
             return Ok();
         }
 
+        [HttpPost("UpdateDraft")]
+        public async Task<IActionResult> UpdateDraft([FromBody] Guid id)
+        {
+
+            await _postService.UpdateDraft(id);
+
+            return Ok();
+        }
+
         [HttpPost("UpdateComment")]
         public async Task<IActionResult> UpdateComment([FromBody] CommentDto comment)
         {
@@ -211,7 +230,7 @@ namespace BlogWebAPI.Controllers
 
 
         [HttpPost("DeletePost")]
-        public async Task<IActionResult> DeletePost(Guid id)
+        public async Task<IActionResult> DeletePost([FromBody] Guid id)
         {
             try
             {
@@ -258,6 +277,23 @@ namespace BlogWebAPI.Controllers
             {
                 return BadRequest(new { error = ex.Message });
             }
+        }
+
+        [HttpGet("GetNotification")]
+        public async Task<IActionResult> GetNotifications()
+        {
+            var notifications = await _postService.GetNotificationsByUserId();
+
+            return Ok(notifications);
+        }
+
+        [HttpPost("UpdateNotification")]
+        public async Task<IActionResult> UpdateNotification([FromBody] List<Guid> id)
+        {
+
+            await _postService.UpdateNotification(id);
+
+            return Ok();
         }
     }
 }

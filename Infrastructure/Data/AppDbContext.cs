@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 
 
@@ -20,6 +21,8 @@ namespace Infrastructure.Data
         public DbSet<Category> Categories { get; set; }
         public DbSet<PostCategory> PostCategories { get; set; }
         public DbSet<PostLike> PostLikes { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
+        public DbSet<Follower> Followers { get; set; }
 
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {

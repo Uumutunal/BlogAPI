@@ -12,6 +12,7 @@ namespace Service.Models
         public string Title { get; set; }
         public string Content { get; set; }
         public string? Photo { get; set; }
+        public bool IsDraft { get; set; }
 
     }
 }

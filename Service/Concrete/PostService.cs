@@ -3,6 +3,8 @@ using Azure.Core;
 using Domain.Core.Repositories;
 using Domain.Entities;
 using Mapster;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Hosting;
 using Service.Abstract;
 using Service.Models;
 using System;
@@ -24,8 +26,11 @@ namespace Service.Concrete
         private readonly IRepository<Comment> _commentRepository;
         private readonly IRepository<PostTag> _postTagRepository;
         private readonly IRepository<Tag> _tagRepository;
+        private readonly IRepository<Notification> _notificationRepository;
+        private readonly IRepository<Follower> _followerRepository;
+        private readonly UserManager<User> _userManager;
 
-        public PostService(IUnitOfWork unitOfWork, IRepository<Post> postRepository, IRepository<PostComment> postCommentRepository, IRepository<PostCategory> postCategoryRepository, IRepository<Category> categoryRepository, IRepository<Comment> commentRepository, IRepository<PostTag> postTagRepository, IRepository<Tag> tagRepository)
+        public PostService(IUnitOfWork unitOfWork, IRepository<Post> postRepository, IRepository<PostComment> postCommentRepository, IRepository<PostCategory> postCategoryRepository, IRepository<Category> categoryRepository, IRepository<Comment> commentRepository, IRepository<PostTag> postTagRepository, IRepository<Tag> tagRepository, IRepository<Notification> notificationRepository, UserManager<User> userManager, IRepository<Follower> followerRepository)
         {
             _unitOfWork = unitOfWork;
             _postRepository = postRepository;
@@ -35,6 +40,9 @@ namespace Service.Concrete
             _commentRepository = commentRepository;
             _postTagRepository = postTagRepository;
             _tagRepository = tagRepository;
+            _notificationRepository = notificationRepository;
+            _userManager = userManager;
+            _followerRepository = followerRepository;
         }
 
         public async Task<List<CategoryDto>> GetAllCategories()
@@ -74,6 +82,16 @@ namespace Service.Concrete
 
             return mappedComments;
         }
+
+        public async Task<List<NotificationDto>> GetNotificationsByUserId()
+        {
+            var allNotifications = await _notificationRepository.GetAllAsync();
+            var notifications = allNotifications.Where(x => !x.IsRead);
+            var mappedNotification = notifications.Adapt<List<NotificationDto>>();
+
+            return mappedNotification;
+        }
+
         public async Task CreateCategory(CategoryDto categoryDto)
         {
             var category = categoryDto.Adapt<Category>();
@@ -143,6 +161,7 @@ namespace Service.Concrete
             var postToBeApproved = await _postRepository.GetByIdAsync(id);
             postToBeApproved.IsApproved = true;
             await _postRepository.Update(postToBeApproved);
+            await NotifySubscribersAsync(postToBeApproved);
         }
 
         public async Task UpdatePost(AddPostRequest request)
@@ -151,8 +170,12 @@ namespace Service.Concrete
 
             postToUpdate.Title = request.Post.Title;
             postToUpdate.Content = request.Post.Content;
-            postToUpdate.Photo = request.Post.Photo;
+            //postToUpdate.Photo = request.Post.Photo;
 
+            if (request.Post.Photo != null)
+            {
+                postToUpdate.Photo = request.Post.Photo;
+            }
 
             foreach (var tag in request.Tags)
             {
@@ -231,6 +254,7 @@ namespace Service.Concrete
                 };
 
                 await _postTagRepository.AddAsync(postTag.Adapt<PostTag>());
+
             }
 
 
@@ -256,8 +280,17 @@ namespace Service.Concrete
         public async Task<List<PostDto>> GetAllPosts()
         {
             var posts = await _postRepository.GetAllAsync();
-            var approvedPosts = posts.Where(x => x.IsApproved);
+            var approvedPosts = posts.Where(x => x.IsApproved && !x.IsDraft);
             var mappedPosts = approvedPosts.Adapt<List<PostDto>>();
+
+            return mappedPosts;
+        }
+
+        public async Task<List<PostDto>> GetDrafts()
+        {
+            var posts = await _postRepository.GetAllAsync();
+            var draftPosts = posts.Where(x => x.IsDraft);
+            var mappedPosts = draftPosts.Adapt<List<PostDto>>();
 
             return mappedPosts;
         }
@@ -270,7 +303,7 @@ namespace Service.Concrete
         public async Task<List<PostDto>> GetAllUnApprovedPosts()
         {
             var posts = await _postRepository.GetAllAsync();
-            var approvedPosts = posts.Where(x => !x.IsApproved);
+            var approvedPosts = posts.Where(x => !x.IsApproved && !x.IsDraft);
             var mappedPosts = approvedPosts.Adapt<List<PostDto>>();
 
             return mappedPosts;
@@ -348,5 +381,52 @@ namespace Service.Concrete
             return postsMapped;
         }
 
+        public async Task UpdateDraft(Guid id)
+        {
+            var postToBeUpdated = await _postRepository.GetByIdAsync(id);
+            postToBeUpdated.IsDraft = false;
+            await _postRepository.Update(postToBeUpdated);
+        }
+
+        public async Task UpdateNotification(List<Guid> id)
+        {
+            foreach (var item in id)
+            {
+                var notificationToBeUpdated = await _notificationRepository.GetByIdAsync(item);
+                notificationToBeUpdated.IsRead = true;
+                await _notificationRepository.Update(notificationToBeUpdated);
+            }
+            
+        }
+
+        private async Task NotifySubscribersAsync(Post post)
+        {
+
+            var subscribers = await _userManager.GetUsersInRoleAsync("Subscriber");
+            var allPostCategories = await _postCategoryRepository.GetAllAsync();
+            var postCategory = allPostCategories.FirstOrDefault(x => x.PostId == post.Id);
+
+            var allUsers = _userManager.Users.ToList();
+            var author = allUsers.FirstOrDefault(x => x.Id == postCategory.UserId);
+
+            var allFollowers = await _followerRepository.GetAllAsync();
+
+            var authorFollowers = allFollowers.Where(x => x.AuthorId == author.Id);
+
+            foreach (var subscriber in authorFollowers)
+            {
+                var notification = new Notification
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = subscriber.SubscriberId,
+                    Message = $"Yeni bir post eklendi: {post.Title}, - Yazar: {author.Firstname} {author.Lastname}",
+                    CreatedDate = DateTime.Now,
+                    IsRead = false
+                };
+
+                await _notificationRepository.AddAsync(notification);
+            }
+
+        }
     }
 }
