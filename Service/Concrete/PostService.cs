@@ -27,9 +27,10 @@ namespace Service.Concrete
         private readonly IRepository<PostTag> _postTagRepository;
         private readonly IRepository<Tag> _tagRepository;
         private readonly IRepository<Notification> _notificationRepository;
+        private readonly IRepository<Follower> _followerRepository;
         private readonly UserManager<User> _userManager;
 
-        public PostService(IUnitOfWork unitOfWork, IRepository<Post> postRepository, IRepository<PostComment> postCommentRepository, IRepository<PostCategory> postCategoryRepository, IRepository<Category> categoryRepository, IRepository<Comment> commentRepository, IRepository<PostTag> postTagRepository, IRepository<Tag> tagRepository, IRepository<Notification> notificationRepository, UserManager<User> userManager)
+        public PostService(IUnitOfWork unitOfWork, IRepository<Post> postRepository, IRepository<PostComment> postCommentRepository, IRepository<PostCategory> postCategoryRepository, IRepository<Category> categoryRepository, IRepository<Comment> commentRepository, IRepository<PostTag> postTagRepository, IRepository<Tag> tagRepository, IRepository<Notification> notificationRepository, UserManager<User> userManager, IRepository<Follower> followerRepository)
         {
             _unitOfWork = unitOfWork;
             _postRepository = postRepository;
@@ -41,6 +42,7 @@ namespace Service.Concrete
             _tagRepository = tagRepository;
             _notificationRepository = notificationRepository;
             _userManager = userManager;
+            _followerRepository = followerRepository;
         }
 
         public async Task<List<CategoryDto>> GetAllCategories()
@@ -405,15 +407,19 @@ namespace Service.Concrete
             var postCategory = allPostCategories.FirstOrDefault(x => x.PostId == post.Id);
 
             var allUsers = _userManager.Users.ToList();
-            var user = allUsers.FirstOrDefault(x => x.Id == postCategory.UserId);
+            var author = allUsers.FirstOrDefault(x => x.Id == postCategory.UserId);
 
-            foreach (var subscriber in subscribers)
+            var allFollowers = await _followerRepository.GetAllAsync();
+
+            var authorFollowers = allFollowers.Where(x => x.AuthorId == author.Id);
+
+            foreach (var subscriber in authorFollowers)
             {
                 var notification = new Notification
                 {
                     Id = Guid.NewGuid(),
-                    UserId = subscriber.Id,
-                    Message = $"Yeni bir post eklendi: {post.Title}, - Yazar: {user.Firstname} {user.Lastname}",
+                    UserId = subscriber.SubscriberId,
+                    Message = $"Yeni bir post eklendi: {post.Title}, - Yazar: {author.Firstname} {author.Lastname}",
                     CreatedDate = DateTime.Now,
                     IsRead = false
                 };

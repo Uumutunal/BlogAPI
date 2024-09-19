@@ -178,7 +178,7 @@ namespace Service.Concrete
         }
         public async Task UnFollowUser(Guid id)
         {
-            var followerUser = _followerRepository.Delete(id);
+            await _followerRepository.Delete(id);
         }
 
         public async Task<List<FollowerDto>> GetAllFollowerUser()

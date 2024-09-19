@@ -284,11 +284,6 @@ namespace BlogWebAPI.Controllers
         {
             var notifications = await _postService.GetNotificationsByUserId();
 
-            if (notifications == null || !notifications.Any())
-            {
-                return NotFound("Herhangi bir bildiriminiz yok.");
-            }
-
             return Ok(notifications);
         }
 
