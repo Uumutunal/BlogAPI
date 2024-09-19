@@ -29,11 +29,12 @@ namespace Service.Concrete
         private readonly SignInManager<User> _signInManager;
         private readonly IConfiguration _configuration;
         private readonly IServiceProvider _serviceProvider;
+        private readonly IRepository<Follower> _followerRepository;
         private readonly JwtSecurityTokenHandler _jwtSecurityTokenHandler;
 
         public UserService(IUserRepository<User> userRepository, IMapper mapper, UserManager<User> userManager,
     SignInManager<User> signInManager,
-    IConfiguration configuration, IServiceProvider serviceProvider)
+    IConfiguration configuration, IServiceProvider serviceProvider, IRepository<Follower> followerRepository)
         {
             _userRepository = userRepository;
             _mapper = mapper;
@@ -41,6 +42,7 @@ namespace Service.Concrete
             _signInManager = signInManager;
             _configuration = configuration;
             _serviceProvider = serviceProvider;
+            _followerRepository = followerRepository;
         }
 
 
@@ -167,6 +169,23 @@ namespace Service.Concrete
 
             return true;
 
+        }
+
+        public async Task FollowUser(FollowerDto followerDto)
+        {
+            var mappedFollow = followerDto.Adapt<Follower>();
+            var followerUser = await _followerRepository.AddAsync(mappedFollow);
+        }
+        public async Task UnFollowUser(Guid id)
+        {
+            var followerUser = _followerRepository.Delete(id);
+        }
+
+        public async Task<List<FollowerDto>> GetAllFollowerUser()
+        {
+            var allFollowers = await _followerRepository.GetAllAsync();
+            var mappedFollowers = allFollowers.Adapt<List<FollowerDto>>();
+            return mappedFollowers;
         }
 
         public async Task<bool> RemoveUserRole(string userId, string roleName)

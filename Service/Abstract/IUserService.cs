@@ -23,5 +23,8 @@ namespace Service.Abstract
         Task<List<string>> GetAllRoles();
         Task<IdentityResult> DeleteUser(string id);
         Task<List<string>> GetUserRoleById(string id);
+        Task FollowUser(FollowerDto followerDto);
+        Task UnFollowUser(Guid id);
+        Task<List<FollowerDto>> GetAllFollowerUser();
     }
 }
