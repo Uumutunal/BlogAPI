@@ -23,6 +23,7 @@ namespace Infrastructure.Data
         public DbSet<PostLike> PostLikes { get; set; }
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<Follower> Followers { get; set; }
+        public DbSet<FavoritePost> FavoritePosts { get; set; }
 
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
